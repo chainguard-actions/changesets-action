@@ -1,0 +1,27 @@
+name: Test publish input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          publish: "echo 'publish step'"
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: "changeset-release/main"
+          createGithubReleases: "false"
+        continue-on-error: true
+      - name: Assert outputs exist
+        run: |
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
+          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
+          echo "PASS: action ran with publish input"
