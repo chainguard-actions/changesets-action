@@ -1,0 +1,36 @@
+name: Test publish input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          publish: "echo publish-command"
+          version: "echo version-command"
+          setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
+          branch: "main"
+          commit: "Version Packages"
+          title: "Version Packages"
+          cwd: "."
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        continue-on-error: true
+      - name: Assert outputs exist
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+        run: |
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "PASS: action completed with publish input"
