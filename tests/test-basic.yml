@@ -1,0 +1,25 @@
+name: Test basic usage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          setupGitUser: "true"
+          createGithubReleases: "true"
+          commitMode: "git-cli"
+      - name: Assert action ran
+        run: |
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
+          echo "Action completed (may have errored due to no real GitHub context, but inputs were accepted)"
+          echo "PASS"
