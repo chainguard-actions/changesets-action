@@ -5,7 +5,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: fake-token
       GITHUB_REF: refs/heads/main
       GITHUB_EVENT_NAME: push
     steps:
@@ -15,14 +14,16 @@ jobs:
         with:
           version: "changeset version"
           cwd: "."
-          commit: "chore: version packages"
-          title: "chore: version packages"
-          branch: "changeset-release/main"
           createGithubReleases: "false"
+          setupGitUser: "true"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
-      - name: Assert outputs exist
+      - name: Assert action ran
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
-          echo "PASS: action ran with version and cwd inputs"
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped"
+            exit 1
+          fi
+          echo "PASS: action executed"

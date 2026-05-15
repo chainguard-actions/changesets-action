@@ -1,4 +1,4 @@
-name: Test publish input
+name: Test basic config inputs
 on:
   workflow_dispatch:
 jobs:
@@ -12,15 +12,20 @@ jobs:
       - id: action
         uses: .
         with:
-          publish: "echo publish-skipped"
-          createGithubReleases: "false"
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: main
           setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
         env:
           GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
       - name: Assert action ran
         run: |
           echo "outcome: ${{ steps.action.outcome }}"
+          # The action may fail due to missing changesets config, but it should at least start
+          # We verify the step executed (not skipped)
           if [ "${{ steps.action.outcome }}" = "skipped" ]; then
             echo "FAIL: action was skipped"
             exit 1
