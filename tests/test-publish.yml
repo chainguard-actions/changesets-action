@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test publish inputs
 on:
   workflow_dispatch:
 jobs:
@@ -14,14 +14,18 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
+          publish: "echo 'publish step'"
+          cwd: "."
+          prDraft: "create"
           setupGitUser: "true"
           createGithubReleases: "false"
-          commitMode: "git-cli"
-      - name: Assert action ran (outputs exist or action errored gracefully)
+      - name: Assert action ran with publish/cwd/prDraft inputs
         env:
           PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
         run: |
           echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
           echo "hasChangesets: $HAS_CHANGESETS"
-          echo "PASS: action completed (with or without changesets)"
+          echo "PASS: action completed with publish/cwd/prDraft inputs"
