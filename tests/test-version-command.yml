@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test version command inputs
 on:
   workflow_dispatch:
 jobs:
@@ -11,17 +11,21 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
+          version: "changeset version"
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: "main"
           setupGitUser: "true"
-          createGithubReleases: "true"
+          createGithubReleases: "false"
           commitMode: "git-cli"
         env:
           GITHUB_REF: refs/heads/main
           GITHUB_EVENT_NAME: push
-      - name: Assert outputs exist
+      - name: Assert outputs accessible
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
-          PUBLISHED: ${{ steps.action.outputs.published }}
+          PR_NUMBER: ${{ steps.action.outputs.pullRequestNumber }}
         run: |
           echo "hasChangesets: $HAS_CHANGESETS"
-          echo "published: $PUBLISHED"
-          echo "PASS: action ran and outputs are accessible"
+          echo "pullRequestNumber: $PR_NUMBER"
+          echo "PASS: action ran with version/commit/title/branch inputs"

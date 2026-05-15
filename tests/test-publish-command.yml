@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test publish command inputs
 on:
   workflow_dispatch:
 jobs:
@@ -11,17 +11,19 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          setupGitUser: "true"
-          createGithubReleases: "true"
-          commitMode: "git-cli"
+          publish: "echo publish"
+          cwd: "."
+          setupGitUser: "false"
+          createGithubReleases: "false"
+          commitMode: "github-api"
         env:
           GITHUB_REF: refs/heads/main
           GITHUB_EVENT_NAME: push
-      - name: Assert outputs exist
+      - name: Assert outputs accessible
         env:
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
-          echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          echo "PASS: action ran and outputs are accessible"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "PASS: action ran with publish/cwd inputs"
