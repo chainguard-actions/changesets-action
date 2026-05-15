@@ -1,4 +1,4 @@
-name: Test publish input
+name: Test title and branch inputs
 on:
   workflow_dispatch:
 jobs:
@@ -12,9 +12,10 @@ jobs:
       - id: action
         uses: .
         with:
-          publish: "echo 'publish step'"
-          createGithubReleases: "false"
+          title: "Version Packages (automated)"
+          branch: "main"
           setupGitUser: "true"
+          createGithubReleases: "false"
         env:
           GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
@@ -26,9 +27,3 @@ jobs:
             exit 1
           fi
           echo "PASS: action ran with outcome ${{ steps.action.outcome }}"
-      - name: Assert published output exists
-        env:
-          PUBLISHED: ${{ steps.action.outputs.published }}
-        run: |
-          echo "published: $PUBLISHED"
-          echo "PASS: published output is '$PUBLISHED'"
