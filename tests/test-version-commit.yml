@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test version and commit inputs
 on:
   workflow_dispatch:
 jobs:
@@ -12,10 +12,10 @@ jobs:
       - id: action
         uses: .
         with:
+          version: "changeset version"
+          commit: "chore: version packages"
           setupGitUser: "true"
           createGithubReleases: "false"
-          commitMode: "git-cli"
-          branch: "main"
         env:
           GITHUB_TOKEN: "fake-token-for-testing"
         continue-on-error: true
@@ -23,6 +23,4 @@ jobs:
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
           echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
-          echo "PASS: action ran and outputs are accessible"
+          echo "PASS: action ran with version and commit inputs"
