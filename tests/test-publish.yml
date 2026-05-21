@@ -12,14 +12,22 @@ jobs:
       - id: action
         uses: .
         with:
-          publish: "echo 'publish step'"
+          publish: "echo publish"
           setupGitUser: "true"
           createGithubReleases: "false"
+          commitMode: "git-cli"
+          branch: "main"
+          commit: "Version Packages"
+          title: "Version Packages"
+          cwd: "."
         env:
-          GITHUB_TOKEN: "fake-token-for-testing"
+          GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
       - name: Assert outputs exist
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
           echo "PASS: action ran with publish input"

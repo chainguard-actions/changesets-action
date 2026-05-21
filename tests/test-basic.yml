@@ -16,13 +16,17 @@ jobs:
           createGithubReleases: "false"
           commitMode: "git-cli"
           branch: "main"
+          commit: "Version Packages"
+          title: "Version Packages"
         env:
-          GITHUB_TOKEN: "fake-token-for-testing"
+          GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
       - name: Assert outputs exist
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
-          echo "PASS: action ran and outputs are accessible"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          # The action may fail without a real changeset repo, but outputs should be set or empty
+          echo "PASS: action ran without unexpected crash"

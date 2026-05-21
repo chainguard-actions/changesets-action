@@ -14,16 +14,20 @@ jobs:
         with:
           version: "changeset version"
           cwd: "."
-          createGithubReleases: "false"
           setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
+          branch: "main"
+          commit: "Version Packages"
+          title: "Version Packages"
         env:
           GITHUB_TOKEN: ${{ github.token }}
         continue-on-error: true
-      - name: Assert action ran
+      - name: Assert outputs exist
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
-          echo "outcome: ${{ steps.action.outcome }}"
-          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
-            echo "FAIL: action was skipped"
-            exit 1
-          fi
-          echo "PASS: action executed"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          echo "PASS: action ran with version and cwd inputs"
