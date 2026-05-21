@@ -17,16 +17,12 @@ jobs:
           version: "changeset version"
           commit: "chore: version packages"
           title: "chore: version packages"
-          branch: "main"
           setupGitUser: "true"
-          createGithubReleases: "false"
-      - name: Assert action ran with version PR inputs
-        env:
-          PUBLISHED: ${{ steps.action.outputs.published }}
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
-          PR_NUMBER: ${{ steps.action.outputs.pullRequestNumber }}
+      - name: Assert action ran
         run: |
-          echo "published: $PUBLISHED"
-          echo "hasChangesets: $HAS_CHANGESETS"
-          echo "pullRequestNumber: $PR_NUMBER"
-          echo "PASS: action completed with version/commit/title/branch inputs"
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with version/commit/title inputs (outcome=${{ steps.action.outcome }})"

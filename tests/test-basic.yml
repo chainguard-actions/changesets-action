@@ -15,13 +15,14 @@ jobs:
         with:
           github-token: ${{ github.token }}
           setupGitUser: "true"
-          createGithubReleases: "false"
+          createGithubReleases: "true"
           commitMode: "git-cli"
-      - name: Assert action ran (outputs exist or action errored gracefully)
-        env:
-          PUBLISHED: ${{ steps.action.outputs.published }}
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+      - name: Assert action ran
         run: |
-          echo "published: $PUBLISHED"
-          echo "hasChangesets: $HAS_CHANGESETS"
-          echo "PASS: action completed (with or without changesets)"
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The action may fail due to missing changesets config, but it should at least start
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran (outcome=${{ steps.action.outcome }})"

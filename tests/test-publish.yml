@@ -1,4 +1,4 @@
-name: Test publish inputs
+name: Test publish and branch inputs
 on:
   workflow_dispatch:
 jobs:
@@ -14,18 +14,16 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish: "echo 'publish step'"
+          publish: "echo publish"
+          branch: "main"
           cwd: "."
           prDraft: "create"
-          setupGitUser: "true"
           createGithubReleases: "false"
-      - name: Assert action ran with publish/cwd/prDraft inputs
-        env:
-          PUBLISHED: ${{ steps.action.outputs.published }}
-          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+      - name: Assert action ran
         run: |
-          echo "published: $PUBLISHED"
-          echo "publishedPackages: $PUBLISHED_PACKAGES"
-          echo "hasChangesets: $HAS_CHANGESETS"
-          echo "PASS: action completed with publish/cwd/prDraft inputs"
+          echo "outcome: ${{ steps.action.outcome }}"
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with publish/branch/cwd/prDraft inputs (outcome=${{ steps.action.outcome }})"
