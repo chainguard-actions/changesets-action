@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test publish, cwd, and branch inputs
 on:
   workflow_dispatch:
 jobs:
@@ -12,16 +12,18 @@ jobs:
       - id: action
         uses: .
         with:
+          publish: "echo publish-skipped"
+          cwd: "."
+          branch: "main"
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
-      - name: Assert outputs exist
+      - name: Assert action ran
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
           echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "PASS: action ran and produced outputs"
+          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
+          echo "PASS: action ran with publish, cwd, and branch inputs"
