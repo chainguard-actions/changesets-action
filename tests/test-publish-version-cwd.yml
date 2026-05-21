@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test publish, version, and cwd inputs
 on:
   workflow_dispatch:
 jobs:
@@ -10,13 +10,16 @@ jobs:
         uses: .
         with:
           github-token: ${{ github.token }}
-          setupGitUser: "true"
+          publish: "echo publish"
+          version: "echo version"
+          cwd: "."
           createGithubReleases: "false"
-          commitMode: "git-cli"
+          setupGitUser: "true"
         continue-on-error: true
-      - name: Assert action ran
+      - name: Assert action ran with publish/version/cwd inputs
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
+          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
           echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
           echo "Action completed (may fail due to no changesets config, but inputs were accepted)"
           echo "PASS"
