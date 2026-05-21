@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test publish input
 on:
   workflow_dispatch:
 jobs:
@@ -13,18 +13,17 @@ jobs:
         uses: .
         with:
           github-token: ${{ github.token }}
-          setupGitUser: "true"
+          publish: "echo 'publish step'"
           createGithubReleases: "false"
-          commitMode: "git-cli"
-          commit: "Version Packages"
-          title: "Version Packages"
+          setupGitUser: "true"
         continue-on-error: true
-      - name: Assert hasChangesets output exists
+      - name: Assert action outputs are accessible
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
           echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          # The action should produce these outputs (may be empty/false with no changesets)
-          echo "PASS: action completed and outputs are accessible"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "PASS: action completed with publish input"
