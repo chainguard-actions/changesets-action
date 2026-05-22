@@ -5,20 +5,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
+      GITHUB_TOKEN: fake-token
       GITHUB_REF: refs/heads/main
       GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
-        continue-on-error: true
         with:
-          publish: "echo publish"
-          createGithubReleases: "false"
+          publish: "echo 'publishing packages'"
           setupGitUser: "true"
-        env:
-          GITHUB_TOKEN: "fake-token-for-testing"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
+        continue-on-error: true
       - name: Assert action ran
         run: |
-          echo "Action completed with publish input set"
-          echo "PASS"
+          echo "outcome: ${{ steps.action.outcome }}"
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
+          echo "PASS: action executed with publish input"

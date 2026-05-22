@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test commit, title, and branch inputs
 on:
   workflow_dispatch:
 jobs:
@@ -13,6 +13,9 @@ jobs:
       - id: action
         uses: .
         with:
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: "main"
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
@@ -21,5 +24,4 @@ jobs:
         run: |
           echo "outcome: ${{ steps.action.outcome }}"
           echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "PASS: action executed"
+          echo "PASS: action executed with commit, title, and branch inputs"
