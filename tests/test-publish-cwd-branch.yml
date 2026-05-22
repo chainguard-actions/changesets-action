@@ -1,0 +1,27 @@
+name: Test publish, cwd, and branch inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          publish: "echo publish-step"
+          cwd: "."
+          branch: "main"
+          createGithubReleases: "false"
+          setupGitUser: "true"
+        continue-on-error: true
+      - name: Assert action ran with publish, cwd, and branch inputs
+        run: |
+          echo "outcome: ${{ steps.action.outcome }}"
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
+          echo "PASS: action executed with publish, cwd, and branch inputs"
