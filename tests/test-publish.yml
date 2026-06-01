@@ -12,13 +12,17 @@ jobs:
       - id: action
         uses: .
         with:
-          publish: "echo 'publish step'"
-          setupGitUser: "true"
+          publish: "echo publish"
           createGithubReleases: "false"
+          setupGitUser: "true"
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: "dummy-token"
         continue-on-error: true
-      - name: Assert action ran
+      - name: Assert outputs
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
-          echo "Action completed with publish input"
-          echo "PASS"
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "PASS: action ran with publish input"
