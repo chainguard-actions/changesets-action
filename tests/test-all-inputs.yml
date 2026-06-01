@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test all inputs
 on:
   workflow_dispatch:
 jobs:
@@ -12,6 +12,12 @@ jobs:
       - id: action
         uses: .
         with:
+          publish: "echo publish-step"
+          version: "echo version-step"
+          commit: "chore: version packages"
+          title: "Version Packages (automated)"
+          branch: "main"
+          cwd: "."
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
@@ -37,4 +43,10 @@ jobs:
           PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
           echo "published: $PUBLISHED"
+          echo "PASS: output checked"
+      - name: Assert pullRequestNumber output exists
+        env:
+          PR_NUMBER: ${{ steps.action.outputs.pullRequestNumber }}
+        run: |
+          echo "pullRequestNumber: $PR_NUMBER"
           echo "PASS: output checked"
