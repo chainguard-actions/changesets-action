@@ -1,0 +1,42 @@
+name: Test branch, commit, and title inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          branch: main
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
+        continue-on-error: true
+      - name: Assert hasChangesets output exists
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+        run: |
+          echo "hasChangesets: $HAS_CHANGESETS"
+          if [ -z "$HAS_CHANGESETS" ]; then
+            echo "FAIL: hasChangesets output was empty"
+            exit 1
+          fi
+          echo "PASS: hasChangesets output is present"
+      - name: Assert published output exists
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "published: $PUBLISHED"
+          if [ -z "$PUBLISHED" ]; then
+            echo "FAIL: published output was empty"
+            exit 1
+          fi
+          echo "PASS: published output is present"
