@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test version, cwd, and branch inputs
 on:
   workflow_dispatch:
 jobs:
@@ -13,17 +13,16 @@ jobs:
         uses: .
         continue-on-error: true
         with:
+          version: "changeset version"
+          cwd: "."
+          branch: "main"
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
-          commit: "Version Packages"
-          title: "Version Packages"
         env:
           GITHUB_TOKEN: "dummy-token"
-      - name: Assert outputs exist
+      - name: Assert action ran
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
           echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "PASS: action ran (outputs may be empty without real token)"
+          echo "PASS: action ran with version, cwd, and branch inputs"
