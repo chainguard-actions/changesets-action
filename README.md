@@ -9,7 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v1.5.1 | [`v1.5.1`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.1) | [`001cd79`](https://github.com/changesets/action/commit/001cd79f0a536e733315164543a727bdf2d70aff) |
-| v1.5.2 | [`v1.5.2`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.2) | — |
+| v1.5.2 | [`v1.5.2`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.2) | [`e0538e6`](https://github.com/changesets/action/commit/e0538e686673de0265c8a3e2904b8c76beaa43fd) |
 | v1.5.3 | [`v1.5.3`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.3) | [`e0145ed`](https://github.com/changesets/action/commit/e0145edc7d9d8679003495b11f87bd8ef63c0cba) |
 | v1.6.0 | [`v1.6.0`](https://github.com/chainguard-actions/changesets-action/tree/v1.6.0) | [`c48e67d`](https://github.com/changesets/action/commit/c48e67d110a68bc90ccf1098e9646092baacaa87) |
 | v1.7.0 | [`v1.7.0`](https://github.com/chainguard-actions/changesets-action/tree/v1.7.0) | — |
