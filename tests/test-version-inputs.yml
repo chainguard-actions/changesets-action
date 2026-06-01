@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test version commit and title inputs
 on:
   workflow_dispatch:
 jobs:
@@ -15,14 +15,13 @@ jobs:
         env:
           GITHUB_TOKEN: fake-token-for-testing
         with:
-          setupGitUser: "true"
+          version: "echo version-command"
+          commit: "chore: version packages"
+          title: "chore: version packages"
           createGithubReleases: "false"
-          commitMode: "git-cli"
-          branch: "main"
-      - name: Assert outputs exist
+          setupGitUser: "true"
+      - name: Assert action ran
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
           echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
-          echo "PASS: action ran (outputs may be empty without real token)"
+          echo "PASS: action ran with version/commit/title inputs"

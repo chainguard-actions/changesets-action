@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test publish and cwd inputs
 on:
   workflow_dispatch:
 jobs:
@@ -15,14 +15,12 @@ jobs:
         env:
           GITHUB_TOKEN: fake-token-for-testing
         with:
-          setupGitUser: "true"
+          publish: "echo publish-command"
+          cwd: "."
           createGithubReleases: "false"
-          commitMode: "git-cli"
-          branch: "main"
-      - name: Assert outputs exist
+          setupGitUser: "true"
+      - name: Assert action ran
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
           echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
-          echo "PASS: action ran (outputs may be empty without real token)"
+          echo "PASS: action ran with publish/cwd inputs"
