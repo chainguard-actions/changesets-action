@@ -8,7 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
-| v1.5.1 | [`v1.5.1`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.1) | — |
+| v1.5.1 | [`v1.5.1`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.1) | [`001cd79`](https://github.com/changesets/action/commit/001cd79f0a536e733315164543a727bdf2d70aff) |
 | v1.5.2 | [`v1.5.2`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.2) | — |
 | v1.5.3 | [`v1.5.3`](https://github.com/chainguard-actions/changesets-action/tree/v1.5.3) | — |
 | v1.6.0 | [`v1.6.0`](https://github.com/chainguard-actions/changesets-action/tree/v1.6.0) | [`c48e67d`](https://github.com/changesets/action/commit/c48e67d110a68bc90ccf1098e9646092baacaa87) |
