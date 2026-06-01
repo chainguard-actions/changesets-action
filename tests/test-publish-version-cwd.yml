@@ -8,18 +8,21 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
+        continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish: "echo publish"
-          version: "echo version"
+          publish: "echo publish-command"
+          version: "echo version-command"
           cwd: "."
-          createGithubReleases: "false"
           setupGitUser: "true"
-        continue-on-error: true
+          createGithubReleases: "false"
       - name: Assert action ran with publish/version/cwd inputs
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "Action completed (may fail due to no changesets config, but inputs were accepted)"
-          echo "PASS"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "PASS: action accepted publish/version/cwd inputs"

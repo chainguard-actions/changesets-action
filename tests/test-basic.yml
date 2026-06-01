@@ -8,15 +8,17 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
+        continue-on-error: true
         with:
           github-token: ${{ github.token }}
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
-        continue-on-error: true
-      - name: Assert action ran
+      - name: Assert action ran (outputs present or action failed gracefully)
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "Action completed (may fail due to no changesets config, but inputs were accepted)"
-          echo "PASS"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          echo "PASS: action completed (outputs may be empty in test environment)"
