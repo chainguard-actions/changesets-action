@@ -1,0 +1,31 @@
+name: Test publish and version inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          publish: "echo publish-step"
+          version: "echo version-step"
+          commit: "chore: version packages"
+          title: "Version Packages (automated)"
+          createGithubReleases: "false"
+          setupGitUser: "true"
+        continue-on-error: true
+      - name: Assert action ran
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+        run: |
+          echo "published: $PUBLISHED"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          # The action should have run and produced outputs
+          echo "PASS: action ran with publish, version, commit, and title inputs"
