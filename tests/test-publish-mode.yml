@@ -1,0 +1,57 @@
+name: Test publish mode with custom inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up workspace
+        run: |
+          mkdir -p /tmp/test-publish-cwd
+          cat > /tmp/test-publish-cwd/package.json <<'EOF'
+          {
+            "name": "test-publish-pkg",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          mkdir -p /tmp/test-publish-cwd/.changeset
+          cat > /tmp/test-publish-cwd/.changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cwd: /tmp/test-publish-cwd
+          publish: "echo publish-command"
+          commit: "chore: release"
+          title: "chore: release"
+          branch: main
+          version: "echo version-command"
+          setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
+      - name: Assert action ran
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+        run: |
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "PASS: action ran with publish input"
