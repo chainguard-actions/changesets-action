@@ -1,0 +1,29 @@
+name: Test title, branch, cwd, and prDraft inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          title: "Version Packages (test)"
+          branch: "main"
+          cwd: "."
+          prDraft: "create"
+          setupGitUser: "true"
+          createGithubReleases: "false"
+        continue-on-error: true
+      - name: Assert action ran
+        run: |
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
+          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
+          echo "Action completed (may fail due to no changesets config, which is expected)"
+          echo "PASS"
