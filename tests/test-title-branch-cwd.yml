@@ -1,4 +1,4 @@
-name: Test publish, version, and commit inputs
+name: Test title, branch, and cwd inputs
 on:
   workflow_dispatch:
 jobs:
@@ -11,9 +11,9 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish: "echo publish-step"
-          version: "echo version-step"
-          commit: "chore: version packages"
+          title: "Version Packages (test)"
+          branch: "main"
+          cwd: "."
           setupGitUser: "true"
           createGithubReleases: "false"
         env:
@@ -21,4 +21,4 @@ jobs:
       - name: Assert action ran
         run: |
           echo "Action completed (may have errored in test env, which is expected)"
-          echo "PASS: inputs publish, version, and commit were accepted"
+          echo "PASS: inputs title, branch, and cwd were accepted"
