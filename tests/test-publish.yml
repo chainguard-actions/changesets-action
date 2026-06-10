@@ -1,4 +1,4 @@
-name: Test basic usage with version inputs
+name: Test publish input
 on:
   workflow_dispatch:
 jobs:
@@ -12,11 +12,11 @@ jobs:
       - id: action
         uses: .
         with:
-          commit: "chore: version packages"
-          title: "chore: version packages"
+          publish: "echo publish-command"
+          commit: "chore: release"
+          title: "chore: release"
           branch: main
           cwd: "."
-          version: "echo version-command"
           setupGitUser: "false"
           createGithubReleases: "false"
         env:
@@ -24,9 +24,9 @@ jobs:
         continue-on-error: true
       - name: Assert outputs exist
         env:
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
-          echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          echo "PASS: action ran and produced outputs (or failed gracefully with dummy token)"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "PASS: action ran with publish input (or failed gracefully with dummy token)"
