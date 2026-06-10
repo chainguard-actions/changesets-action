@@ -15,7 +15,7 @@ jobs:
           createGithubReleases: "false"
           commitMode: "git-cli"
         continue-on-error: true
-      - name: Assert outputs are present
+      - name: Assert outputs exist
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
@@ -23,5 +23,5 @@ jobs:
           echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
           # The action may fail due to missing GITHUB_TOKEN or repo context,
-          # but we verify the step ran and outputs are accessible (even if empty)
-          echo "PASS: action step executed"
+          # but we verify the step ran and outputs are accessible
+          echo "PASS: action step completed"
