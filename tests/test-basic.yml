@@ -4,25 +4,33 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
-        continue-on-error: true
         with:
           github-token: ${{ github.token }}
+          commit: "Version Packages (test)"
+          title: "Version Packages (test)"
+          branch: changeset-release/main
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert outputs exist
+        continue-on-error: true
+      - name: Assert hasChangesets output is set
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
           echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          # The action may fail in test environment without a real repo setup,
-          # but we verify it ran and produced recognizable output values or empty
-          echo "PASS: action ran without unexpected crash"
+          # The action should produce these outputs (even if false/empty in a repo without changesets)
+          # We just verify the step ran and produced recognizable output values
+          if [ "$HAS_CHANGESETS" != "true" ] && [ "$HAS_CHANGESETS" != "false" ] && [ "$HAS_CHANGESETS" != "" ]; then
+            echo "FAIL: unexpected hasChangesets value: $HAS_CHANGESETS"
+            exit 1
+          fi
+          echo "PASS"

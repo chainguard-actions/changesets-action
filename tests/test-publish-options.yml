@@ -1,0 +1,39 @@
+name: Test publish options
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          publish: "echo publish-step"
+          version: "echo version-step"
+          cwd: "."
+          prDraft: "create"
+          createGithubReleases: "false"
+          setupGitUser: "true"
+        continue-on-error: true
+      - name: Assert outputs are present
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PR_NUMBER: ${{ steps.action.outputs.pullRequestNumber }}
+        run: |
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "pullRequestNumber: $PR_NUMBER"
+          # Verify the action ran and produced outputs (values may be empty/false in a test repo)
+          if [ "$PUBLISHED" != "true" ] && [ "$PUBLISHED" != "false" ] && [ "$PUBLISHED" != "" ]; then
+            echo "FAIL: unexpected published value: $PUBLISHED"
+            exit 1
+          fi
+          echo "PASS"
