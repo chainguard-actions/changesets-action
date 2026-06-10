@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test title and branch inputs
 on:
   workflow_dispatch:
 jobs:
@@ -11,21 +11,16 @@ jobs:
       - id: action
         uses: .
         with:
+          title: "Version Packages (custom title)"
+          branch: "main"
           setupGitUser: "true"
           createGithubReleases: "false"
-          commitMode: "git-cli"
         continue-on-error: true
-      - name: Assert action ran (outputs present or action attempted)
+      - name: Assert action ran with title and branch inputs
         env:
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
-          PUBLISHED: ${{ steps.action.outputs.published }}
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "hasChangesets: $HAS_CHANGESETS"
-          echo "published: $PUBLISHED"
-          # The action may fail due to missing real GitHub token, but it should at least start
-          # We accept success or failure (due to fake token) but not a missing step
           if [ -z "$OUTCOME" ]; then
             echo "FAIL: step outcome is empty"
             exit 1

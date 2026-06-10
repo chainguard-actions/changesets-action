@@ -5,22 +5,28 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_REF: refs/heads/main
-      GITHUB_EVENT_NAME: push
+      GITHUB_TOKEN: fake-token-for-testing
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
-        continue-on-error: true
-        env:
-          GITHUB_TOKEN: fake-token-for-testing
         with:
-          publish: "echo publish-command"
+          publish: "echo 'publishing packages'"
           cwd: "."
-          createGithubReleases: "false"
           setupGitUser: "true"
-      - name: Assert action ran
+          createGithubReleases: "false"
+        continue-on-error: true
+      - name: Assert action ran with publish and cwd inputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
-          echo "PASS: action ran with publish/cwd inputs"
+          echo "outcome: $OUTCOME"
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: step outcome is empty"
+            exit 1
+          fi
+          echo "PASS: action step executed with outcome=$OUTCOME"

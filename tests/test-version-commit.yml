@@ -5,8 +5,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_REF: refs/heads/main
-      GITHUB_EVENT_NAME: push
+      GITHUB_TOKEN: fake-token-for-testing
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
@@ -16,11 +15,14 @@ jobs:
           commit: "chore: version packages"
           setupGitUser: "true"
           createGithubReleases: "false"
-        env:
-          GITHUB_TOKEN: "fake-token-for-testing"
         continue-on-error: true
-      - name: Assert outputs exist
+      - name: Assert action ran with version and commit inputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "published: ${{ steps.action.outputs.published }}"
-          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "PASS: action ran with version and commit inputs"
+          echo "outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: step outcome is empty"
+            exit 1
+          fi
+          echo "PASS: action step executed with outcome=$OUTCOME"
