@@ -1,4 +1,4 @@
-name: Test publish input
+name: Test publish and version inputs
 on:
   workflow_dispatch:
 jobs:
@@ -13,11 +13,17 @@ jobs:
         uses: .
         with:
           github-token: ${{ github.token }}
-          publish: "echo 'publish step'"
-          createGithubReleases: "false"
+          publish: "echo publish"
+          version: "changeset version"
+          commit: "chore: release packages"
+          title: "chore: release packages"
+          branch: main
+          cwd: .
           setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
         continue-on-error: true
-      - name: Assert action outputs are accessible
+      - name: Assert outputs exist
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
@@ -26,4 +32,11 @@ jobs:
           echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
           echo "publishedPackages: $PUBLISHED_PACKAGES"
-          echo "PASS: action completed with publish input"
+          # Verify the step ran and produced recognizable output values
+          if [ "$PUBLISHED" = "true" ] || [ "$PUBLISHED" = "false" ] || [ -z "$PUBLISHED" ]; then
+            echo "PASS: published output is valid"
+          else
+            echo "FAIL: unexpected published value: $PUBLISHED"
+            exit 1
+          fi
+          echo "PASS"

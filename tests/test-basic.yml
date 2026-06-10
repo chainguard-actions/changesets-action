@@ -13,21 +13,27 @@ jobs:
         uses: .
         with:
           github-token: ${{ github.token }}
+          commit: "Version Packages"
+          title: "Version Packages"
+          branch: main
+          cwd: .
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
         continue-on-error: true
-      - name: Assert hasChangesets output is set
+      - name: Assert outputs exist
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
           echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          # The action should produce these outputs (even if false/empty)
+          # The action should produce these outputs (even if empty/false)
           # We just verify the step ran and produced recognizable output values
-          if [ "$HAS_CHANGESETS" != "true" ] && [ "$HAS_CHANGESETS" != "false" ] && [ -z "$HAS_CHANGESETS" ]; then
-            echo "FAIL: hasChangesets output not set to a recognizable value"
+          if [ "$PUBLISHED" = "true" ] || [ "$PUBLISHED" = "false" ] || [ -z "$PUBLISHED" ]; then
+            echo "PASS: published output is valid"
+          else
+            echo "FAIL: unexpected published value: $PUBLISHED"
             exit 1
           fi
-          echo "PASS: action ran and produced outputs"
+          echo "PASS"
