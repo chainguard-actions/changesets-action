@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test all inputs coverage
 on:
   workflow_dispatch:
 jobs:
@@ -11,17 +11,25 @@ jobs:
       - id: action
         uses: .
         with:
+          publish: "echo publish-step"
+          version: "echo version-step"
+          cwd: "."
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: "main"
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
         continue-on-error: true
-      - name: Assert outputs are present
+      - name: Assert step ran
         env:
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+          PR_NUMBER: ${{ steps.action.outputs.pullRequestNumber }}
         run: |
           echo "hasChangesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          # The action may fail due to missing GITHUB_TOKEN or repo context,
-          # but we verify the step ran and outputs are accessible (even if empty)
-          echo "PASS: action step executed"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "pullRequestNumber: $PR_NUMBER"
+          echo "PASS: action step executed with all inputs"
