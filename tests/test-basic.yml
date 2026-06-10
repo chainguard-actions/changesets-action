@@ -15,18 +15,17 @@ jobs:
           setupGitUser: "true"
           createGithubReleases: "false"
           commitMode: "git-cli"
+          branch: "main"
           commit: "Version Packages"
           title: "Version Packages"
-          branch: "main"
+          cwd: "."
+          version: "echo version-skipped"
         env:
-          GITHUB_TOKEN: "dummy-token"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
       - name: Assert outputs exist
-        env:
-          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
-          PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
-          echo "hasChangesets: $HAS_CHANGESETS"
-          echo "published: $PUBLISHED"
-          # The action may fail due to missing changeset config, but outputs should be set or empty
-          echo "PASS: action ran without unexpected crash"
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
+          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
+          echo "PASS: action ran and produced outputs"

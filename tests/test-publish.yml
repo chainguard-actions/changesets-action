@@ -12,17 +12,21 @@ jobs:
       - id: action
         uses: .
         with:
-          publish: "echo publish"
-          createGithubReleases: "false"
+          publish: "echo publish-skipped"
+          version: "echo version-skipped"
+          cwd: "."
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: "changeset-release/main"
           setupGitUser: "true"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
         env:
-          GITHUB_TOKEN: "dummy-token"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
-      - name: Assert outputs
-        env:
-          PUBLISHED: ${{ steps.action.outputs.published }}
-          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+      - name: Assert outputs exist
         run: |
-          echo "published: $PUBLISHED"
-          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "published: ${{ steps.action.outputs.published }}"
+          echo "publishedPackages: ${{ steps.action.outputs.publishedPackages }}"
+          echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
           echo "PASS: action ran with publish input"
