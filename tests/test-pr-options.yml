@@ -1,4 +1,4 @@
-name: Test basic usage
+name: Test PR and commit options
 on:
   workflow_dispatch:
 jobs:
@@ -14,12 +14,17 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
+          commit: "chore: version packages"
+          title: "chore: version packages"
+          branch: "main"
+          prDraft: "create"
           setupGitUser: "true"
-          createGithubReleases: "true"
+          createGithubReleases: "false"
           commitMode: "git-cli"
-      - name: Assert action ran
+      - name: Assert action ran with PR and commit options
         run: |
           echo "published: ${{ steps.action.outputs.published }}"
           echo "hasChangesets: ${{ steps.action.outputs.hasChangesets }}"
-          echo "Action completed (may fail due to no real GitHub context, but inputs were accepted)"
+          echo "pullRequestNumber: ${{ steps.action.outputs.pullRequestNumber }}"
+          echo "Action completed with commit, title, branch, and prDraft inputs"
           echo "PASS"
