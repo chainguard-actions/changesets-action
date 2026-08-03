@@ -1,0 +1,55 @@
+name: Test pr-base-branch input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Set up workspace with no changesets so no PR creation is attempted,
+      # but we still exercise the pr-base-branch input path.
+      - name: Set up workspace with no changesets
+        run: |
+          mv .changeset .changeset.bak 2>/dev/null || true
+          mkdir -p .changeset
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          pr-base-branch: main
+
+      - name: Assert has-changesets is false
+        env:
+          ACTUAL: ${{ steps.action.outputs.has-changesets }}
+        run: |
+          echo "actual has-changesets: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected has-changesets to be 'false', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: has-changesets is false"
+
+      - name: Assert published is false
+        env:
+          ACTUAL: ${{ steps.action.outputs.published }}
+        run: |
+          echo "actual published: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: published is false"

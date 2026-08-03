@@ -1,0 +1,62 @@
+name: Test has-changesets output when changesets are present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Replace the existing .changeset directory with one containing only an empty
+      # changeset (no releases listed). This makes has-changesets=true but
+      # hasNonEmptyChangesets=false, so no PR creation is attempted.
+      - name: Set up workspace with an empty changeset
+        run: |
+          mv .changeset .changeset.bak
+          mkdir -p .changeset
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          # An empty changeset: front matter with no packages listed
+          cat > .changeset/test-empty-changeset.md << 'EOF'
+          ---
+          ---
+
+          This is an empty changeset with no package releases.
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Assert has-changesets is true
+        env:
+          ACTUAL: ${{ steps.action.outputs.has-changesets }}
+        run: |
+          echo "actual has-changesets: $ACTUAL"
+          if [ "$ACTUAL" != "true" ]; then
+            echo "FAIL: expected has-changesets to be 'true', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: has-changesets is true"
+
+      - name: Assert published is false (no publish script)
+        env:
+          ACTUAL: ${{ steps.action.outputs.published }}
+        run: |
+          echo "actual published: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS: published is false"

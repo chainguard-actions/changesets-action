@@ -1,0 +1,26 @@
+name: Test invalid commit-mode fails gracefully
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          commit-mode: invalid-mode
+        continue-on-error: true
+
+      - name: Assert action failed with invalid commit-mode
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "actual outcome: $OUTCOME"
+          if [ "$OUTCOME" != "failure" ]; then
+            echo "FAIL: expected action to fail with invalid commit-mode, but outcome was '$OUTCOME'"
+            exit 1
+          fi
+          echo "PASS: action correctly failed with invalid commit-mode"
