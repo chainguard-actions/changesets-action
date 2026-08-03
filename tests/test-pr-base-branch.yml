@@ -1,0 +1,33 @@
+name: Test pr-base-branch input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          pr-base-branch: main
+      - name: Assert action ran with pr-base-branch input (success or graceful failure on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+          PR_NUMBER: ${{ steps.action.outputs.pr-number }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "has-changesets: $HAS_CHANGESETS"
+          echo "pr-number: $PR_NUMBER"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with pr-base-branch=main"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

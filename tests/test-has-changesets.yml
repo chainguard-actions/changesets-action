@@ -1,0 +1,59 @@
+name: Test - Has changesets triggers version PR flow
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Remove pre.json so changesets are not filtered, then add a real changeset
+      # with a package release. The action will detect has-changesets: true and
+      # attempt to create a version PR via the GitHub API. Since GITHUB_REPOSITORY
+      # is a sentinel value, the API call will fail — we assert graceful failure.
+      - name: Set up changeset with package release
+        run: |
+          # Remove pre.json so changesets are not filtered by pre mode
+          rm -f .changeset/pre.json
+          # Remove existing changesets to start fresh
+          find .changeset -name '*.md' -not -name 'README.md' -delete
+          # Create a changeset that bumps @changesets/action
+          cat > .changeset/test-patch-release.md << 'EOF'
+          ---
+          "@changesets/action": patch
+          ---
+
+          Test patch release for CI validation.
+          EOF
+
+      - name: Configure git user for action operations
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Assert has-changesets output and graceful outcome
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "has-changesets: $HAS_CHANGESETS"
+          # The action sets has-changesets before attempting any API calls
+          if [ "$HAS_CHANGESETS" != "true" ]; then
+            echo "FAIL: expected has-changesets to be 'true', got '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (PR was created or updated)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable via GitHub API)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

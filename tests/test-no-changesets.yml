@@ -1,0 +1,49 @@
+name: Test - No changesets, no publish script
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # The action's own repo is in pre mode and all changesets are listed in
+      # .changeset/pre.json, so they are filtered out → hasChangesets = false.
+      # With no publish-script, the action should log and return immediately.
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Assert has-changesets is false
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+        run: |
+          echo "has-changesets: $HAS_CHANGESETS"
+          if [ "$HAS_CHANGESETS" != "false" ]; then
+            echo "FAIL: expected has-changesets to be 'false', got '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert published is false
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "published: $PUBLISHED"
+          if [ "$PUBLISHED" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$PUBLISHED'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert published-packages is empty array
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.published-packages }}
+        run: |
+          echo "published-packages: $PUBLISHED_PACKAGES"
+          if [ "$PUBLISHED_PACKAGES" != "[]" ]; then
+            echo "FAIL: expected published-packages to be '[]', got '$PUBLISHED_PACKAGES'"
+            exit 1
+          fi
+          echo "PASS"

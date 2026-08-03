@@ -1,0 +1,52 @@
+name: Test - Empty changeset (no releases) skips PR creation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Remove the pre.json so changesets are not filtered, then add an empty
+      # changeset (no package releases listed). The action should detect
+      # has-changesets: true but skip PR creation because all changesets are empty.
+      - name: Set up empty changeset (no releases)
+        run: |
+          # Remove pre.json so changesets are not filtered by pre mode
+          rm -f .changeset/pre.json
+          # Remove existing changesets to start fresh
+          find .changeset -name '*.md' -not -name 'README.md' -delete
+          # Create an empty changeset (no package releases)
+          cat > .changeset/test-empty-changeset.md << 'EOF'
+          ---
+          ---
+
+          This is an empty changeset with no package releases.
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+
+      - name: Assert has-changesets is true
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+        run: |
+          echo "has-changesets: $HAS_CHANGESETS"
+          if [ "$HAS_CHANGESETS" != "true" ]; then
+            echo "FAIL: expected has-changesets to be 'true', got '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert published is false (no publish happened)
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "published: $PUBLISHED"
+          if [ "$PUBLISHED" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$PUBLISHED'"
+            exit 1
+          fi
+          echo "PASS"
