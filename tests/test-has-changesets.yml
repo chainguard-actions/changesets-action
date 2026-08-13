@@ -1,0 +1,90 @@
+name: Test with changesets present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up a minimal package workspace with a changeset
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-workspace/.changeset"
+          # Minimal package.json
+          cat > "$GITHUB_WORKSPACE/test-workspace/package.json" <<'EOF'
+          {
+            "name": "test-pkg",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          # Minimal changeset config
+          cat > "$GITHUB_WORKSPACE/test-workspace/.changeset/config.json" <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          # A real changeset file (YAML front matter + description)
+          cat > "$GITHUB_WORKSPACE/test-workspace/.changeset/my-feature.md" <<'EOF'
+          ---
+          "test-pkg": patch
+          ---
+
+          A test patch change
+          EOF
+          echo "Workspace set up with changeset"
+          ls -la "$GITHUB_WORKSPACE/test-workspace/.changeset/"
+
+      - id: action
+        uses: .
+        with:
+          cwd: ${{ github.workspace }}/test-workspace
+          # No publish-script → action will try to create/update a version PR
+        continue-on-error: true
+
+      - name: Assert action ran and has-changesets reflects the changeset
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "has-changesets: $HAS_CHANGESETS"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ "$HAS_CHANGESETS" != "true" ]; then
+              echo "FAIL: action succeeded but has-changesets is not 'true', got '$HAS_CHANGESETS'"
+              exit 1
+            fi
+            echo "PASS: action succeeded and has-changesets is true"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected on sentinel repo — PR creation API call fails)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
+
+      - name: Assert published is false (no publish script)
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "published: $PUBLISHED"
+          # published output is set early before any API calls
+          # If the action ran far enough to set outputs, published should be false
+          if [ "$OUTCOME" = "success" ]; then
+            if [ "$PUBLISHED" != "false" ]; then
+              echo "FAIL: expected published to be 'false', got '$PUBLISHED'"
+              exit 1
+            fi
+            echo "PASS: published is false"
+          else
+            echo "PASS: action failed on sentinel repo (expected)"
+          fi

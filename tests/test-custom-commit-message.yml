@@ -1,0 +1,63 @@
+name: Test custom commit-message and pr-title inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up a minimal package workspace with no changesets
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-workspace/.changeset"
+          cat > "$GITHUB_WORKSPACE/test-workspace/package.json" <<'EOF'
+          {
+            "name": "test-pkg",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          cat > "$GITHUB_WORKSPACE/test-workspace/.changeset/config.json" <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          cwd: ${{ github.workspace }}/test-workspace
+          commit-message: "chore: release packages"
+          pr-title: "chore: release packages"
+          # No publish-script, no changesets → exits early without API calls
+
+      - name: Assert action succeeded with custom inputs
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.published-packages }}
+        run: |
+          echo "has-changesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          echo "published-packages: $PUBLISHED_PACKAGES"
+          if [ "$HAS_CHANGESETS" != "false" ]; then
+            echo "FAIL: expected has-changesets to be 'false', got '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          if [ "$PUBLISHED" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$PUBLISHED'"
+            exit 1
+          fi
+          if [ "$PUBLISHED_PACKAGES" != "[]" ]; then
+            echo "FAIL: expected published-packages to be '[]', got '$PUBLISHED_PACKAGES'"
+            exit 1
+          fi
+          echo "PASS: action accepted custom commit-message and pr-title, outputs are correct"

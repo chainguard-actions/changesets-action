@@ -1,0 +1,98 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+      - next
+      - "maintenance/v*" # branch rulesets don't support v[0-9]+
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+  queue: max
+
+permissions: {} # each job should define its own permission explicitly
+
+jobs:
+  select-mode:
+    name: Select mode
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      mode: ${{ steps.select-mode.outputs.mode }}
+    permissions:
+      contents: read # to check out repo (actions/checkout)
+    steps:
+      - uses: $/.github/actions/ci-setup
+        with:
+          skip-cache: true # avoid cache poisoning attacks
+
+      - name: Build
+        run: pnpm build
+
+      - name: Select mode
+        id: select-mode
+        uses: ./select-mode
+
+  version:
+    name: Version
+    if: needs.select-mode.outputs.mode == 'version'
+    needs: select-mode
+    runs-on: ubuntu-latest
+    environment: version
+    timeout-minutes: 20
+    permissions:
+      contents: read # to check out repo (actions/checkout)
+    steps:
+      - uses: $/.github/actions/ci-setup
+        with:
+          skip-cache: true # avoid cache poisoning attacks
+
+      - name: Build
+        run: pnpm build
+
+      - uses: $/.github/actions/setup-bot-auth
+        id: bot-auth
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write # to create version commits (changesets/action)
+          permission-pull-requests: write # to create pull request (changesets/action)
+
+      - name: Create or update release pull request
+        id: changesets
+        uses: ./version
+        with:
+          github-token: ${{ steps.bot-auth.outputs.token }}
+          script: pnpm bump
+
+  publish:
+    name: Publish
+    if: needs.select-mode.outputs.mode == 'publish'
+    needs: select-mode
+    runs-on: ubuntu-latest
+    environment: marketplace
+    timeout-minutes: 20
+    permissions:
+      contents: write # to create release and have it authored by github-actions (changesets/action)
+    steps:
+      - uses: $/.github/actions/ci-setup
+        with:
+          skip-cache: true # avoid cache poisoning attacks
+
+      - name: Build
+        run: pnpm build
+
+      - uses: $/.github/actions/setup-bot-auth
+        id: bot-auth
+        with:
+          client-id: ${{ vars.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-contents: write # to bypass branch and tag protection rules (release.ts)
+
+      - name: Publish to marketplace
+        uses: ./publish
+        with:
+          github-token: ${{ steps.bot-auth.outputs.token }}
+          script: pnpm release

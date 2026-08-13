@@ -1,0 +1,76 @@
+name: Test no changesets present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up a minimal package workspace with no changesets
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-workspace/.changeset"
+          # Minimal package.json (no @changesets/cli dependency so validateChangesetsCliVersion returns early)
+          cat > "$GITHUB_WORKSPACE/test-workspace/package.json" <<'EOF'
+          {
+            "name": "test-pkg",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          # Minimal changeset config
+          cat > "$GITHUB_WORKSPACE/test-workspace/.changeset/config.json" <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          echo "Workspace set up at $GITHUB_WORKSPACE/test-workspace"
+          ls -la "$GITHUB_WORKSPACE/test-workspace/"
+          ls -la "$GITHUB_WORKSPACE/test-workspace/.changeset/"
+
+      - id: action
+        uses: .
+        with:
+          cwd: ${{ github.workspace }}/test-workspace
+          # No publish-script provided → "no changesets + no publish script" path
+
+      - name: Assert has-changesets is false
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+        run: |
+          echo "has-changesets: $HAS_CHANGESETS"
+          if [ "$HAS_CHANGESETS" != "false" ]; then
+            echo "FAIL: expected has-changesets to be 'false', got '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          echo "PASS: has-changesets is false"
+
+      - name: Assert published is false
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "published: $PUBLISHED"
+          if [ "$PUBLISHED" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$PUBLISHED'"
+            exit 1
+          fi
+          echo "PASS: published is false"
+
+      - name: Assert published-packages is empty array
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.published-packages }}
+        run: |
+          echo "published-packages: $PUBLISHED_PACKAGES"
+          if [ "$PUBLISHED_PACKAGES" != "[]" ]; then
+            echo "FAIL: expected published-packages to be '[]', got '$PUBLISHED_PACKAGES'"
+            exit 1
+          fi
+          echo "PASS: published-packages is []"
