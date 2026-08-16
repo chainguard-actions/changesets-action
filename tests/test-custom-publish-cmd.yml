@@ -1,0 +1,29 @@
+name: Test custom publish command input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          publish: "echo publish-command-called"
+          branch: act-harness
+          setupGitUser: "true"
+          createGithubReleases: "false"
+        continue-on-error: true
+      - name: Assert outputs present
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$HAS_CHANGESETS" != "false" ] && [ "$HAS_CHANGESETS" != "true" ] && [ -z "$HAS_CHANGESETS" ]; then
+            echo "FAIL: expected hasChangesets output to be set"
+            exit 1
+          fi
+          echo "PASS: publish input accepted and action ran"

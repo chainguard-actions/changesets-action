@@ -1,0 +1,58 @@
+name: Test outputs when no publish command provided
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF_NAME: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up minimal repo with no changesets
+        run: |
+          mkdir -p .changeset
+          cat > package.json <<'EOF'
+          {
+            "name": "test-repo",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          cat > .changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": false,
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          setupGitUser: "true"
+          createGithubReleases: "false"
+        continue-on-error: true
+
+      - name: Assert published is false when no publish command given
+        env:
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+        run: |
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          # Without a publish command, published should be false or empty
+          if [ "$PUBLISHED" = "true" ]; then
+            echo "FAIL: expected published to be 'false' or empty when no publish command given, got: '$PUBLISHED'"
+            exit 1
+          fi
+          echo "PASS: published is not true (as expected without publish command)"

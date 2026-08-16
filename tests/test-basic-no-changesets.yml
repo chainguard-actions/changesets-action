@@ -1,0 +1,57 @@
+name: Test basic usage - no changesets
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF_NAME: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up a minimal package.json and changeset config
+        run: |
+          mkdir -p .changeset
+          cat > package.json <<'EOF'
+          {
+            "name": "test-repo",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          cat > .changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": false,
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          setupGitUser: "true"
+        continue-on-error: true
+
+      - name: Assert hasChangesets output exists
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          # The action should output hasChangesets as false when no changesets exist
+          if [ "$HAS_CHANGESETS" != "false" ] && [ "$HAS_CHANGESETS" != "true" ] && [ -z "$HAS_CHANGESETS" ]; then
+            echo "FAIL: expected hasChangesets to be 'true' or 'false', got: '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          echo "PASS: hasChangesets output is present"

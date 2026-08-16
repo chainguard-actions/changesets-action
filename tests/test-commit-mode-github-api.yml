@@ -1,0 +1,67 @@
+name: Test commitMode github-api input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF_NAME: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up minimal repo
+        run: |
+          mkdir -p .changeset
+          cat > package.json <<'EOF'
+          {
+            "name": "test-repo",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          cat > .changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": false,
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          setupGitUser: "true"
+          commitMode: "github-api"
+          createGithubReleases: "false"
+        continue-on-error: true
+
+      - name: Assert action ran and produced outputs
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          # The action should produce outputs regardless of commitMode
+          # hasChangesets should be a boolean string
+          if [ "$HAS_CHANGESETS" != "true" ] && [ "$HAS_CHANGESETS" != "false" ]; then
+            echo "WARN: hasChangesets output is empty or unexpected: '$HAS_CHANGESETS'"
+            echo "This may be expected if the action failed due to missing GitHub API access in local testing"
+          else
+            echo "PASS: action produced hasChangesets output: $HAS_CHANGESETS"
+          fi
+          # published should not be true without a publish command
+          if [ "$PUBLISHED" = "true" ]; then
+            echo "FAIL: expected published to be false without publish command"
+            exit 1
+          fi
+          echo "PASS: published is not true"

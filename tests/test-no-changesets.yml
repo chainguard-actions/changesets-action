@@ -1,0 +1,78 @@
+name: Test no changesets scenario
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up a minimal changeset workspace in a git repo
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-workspace/.changeset"
+          cd "$GITHUB_WORKSPACE/test-workspace"
+          git init
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@1.6.2/schema.json",
+            "changelog": "@changesets/changelog-git",
+            "commit": false,
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          cat > package.json << 'EOF'
+          {
+            "name": "test-workspace",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          git add -A
+          git commit -m "init"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          cwd: ${{ github.workspace }}/test-workspace
+
+      - name: Assert hasChangesets is false
+        env:
+          ACTUAL: ${{ steps.action.outputs.hasChangesets }}
+        run: |
+          echo "actual hasChangesets: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected hasChangesets to be 'false', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert published is false
+        env:
+          ACTUAL: ${{ steps.action.outputs.published }}
+        run: |
+          echo "actual published: $ACTUAL"
+          if [ "$ACTUAL" != "false" ]; then
+            echo "FAIL: expected published to be 'false', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
+
+      - name: Assert publishedPackages is empty array
+        env:
+          ACTUAL: ${{ steps.action.outputs.publishedPackages }}
+        run: |
+          echo "actual publishedPackages: $ACTUAL"
+          if [ "$ACTUAL" != "[]" ]; then
+            echo "FAIL: expected publishedPackages to be '[]', got '$ACTUAL'"
+            exit 1
+          fi
+          echo "PASS"
