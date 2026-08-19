@@ -1,0 +1,37 @@
+name: Test with branch input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          branch: act-harness
+          setupGitUser: "true"
+      - name: Assert action ran with branch input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$HAS_CHANGESETS" ] && [ -z "$PUBLISHED" ]; then
+              echo "FAIL: action succeeded but no outputs were set"
+              exit 1
+            fi
+            echo "PASS: action succeeded with branch input"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

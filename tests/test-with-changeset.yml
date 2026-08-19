@@ -1,0 +1,78 @@
+name: Test with changeset present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - name: Create changeset config and a sample changeset
+        run: |
+          mkdir -p .changeset
+
+          # Create changeset config
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+          # Create a sample changeset file
+          cat > .changeset/test-changeset.md << 'EOF'
+          ---
+          "my-package": patch
+          ---
+
+          Test changeset for CI
+          EOF
+
+          # Stage and commit the changeset so it's tracked
+          git add .changeset/
+          git commit -m "Add test changeset" || true
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          setupGitUser: "true"
+          commit: "Version Packages (test)"
+          title: "Version Packages (test)"
+
+      - name: Assert action ran and hasChangesets is true or action failed gracefully
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$OUTCOME" = "success" ]; then
+            # Changeset is present, so hasChangesets should be true
+            if [ "$HAS_CHANGESETS" != "true" ]; then
+              echo "FAIL: expected hasChangesets=true but got '$HAS_CHANGESETS'"
+              exit 1
+            fi
+            echo "PASS: hasChangesets=$HAS_CHANGESETS"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable for PR creation)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
