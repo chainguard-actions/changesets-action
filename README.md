@@ -20,6 +20,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v2.0.0-next.4 | [`v2.0.0-next.4`](https://github.com/chainguard-actions/changesets-action/tree/v2.0.0-next.4) | [`2d9f7af`](https://github.com/changesets/action/commit/2d9f7af6402422be60d377f151c7618011bba45a) |
 | v2.0.0-next.5 | [`v2.0.0-next.5`](https://github.com/chainguard-actions/changesets-action/tree/v2.0.0-next.5) | [`74169fc`](https://github.com/changesets/action/commit/74169fc1c624875cb775a452efc7ee34c2fe9880) |
 | v2.1.0 | [`v2.1.0`](https://github.com/chainguard-actions/changesets-action/tree/v2.1.0) | [`198f833`](https://github.com/changesets/action/commit/198f833dd7d863100ea6e28967bc9a9fdefadb0a) |
+| v2.1.1 | [`v2.1.1`](https://github.com/chainguard-actions/changesets-action/tree/v2.1.1) | [`8488615`](https://github.com/changesets/action/commit/8488615a623b1b9c987934bb89eae8af6a946ac1) |
 
 ## Privacy
 
