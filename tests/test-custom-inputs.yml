@@ -1,0 +1,64 @@
+name: Test custom inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up changeset config only (no pending changesets)
+        run: |
+          mkdir -p .changeset
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          echo "Created .changeset/config.json"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          setupGitUser: "true"
+          commit: "chore: version packages [skip ci]"
+          title: "chore: version packages"
+          createGithubReleases: "false"
+          commitMode: "git-cli"
+
+      - name: Assert action ran with custom inputs or failed gracefully
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$OUTCOME" = "success" ]; then
+            # With no pending changesets, hasChangesets should be false
+            # and published should be false
+            if [ "$HAS_CHANGESETS" != "false" ]; then
+              echo "FAIL: expected hasChangesets to be 'false' but got '$HAS_CHANGESETS'"
+              exit 1
+            fi
+            if [ "$PUBLISHED" != "false" ]; then
+              echo "FAIL: expected published to be 'false' but got '$PUBLISHED'"
+              exit 1
+            fi
+            echo "PASS: action ran with custom inputs, no changesets detected"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

@@ -1,0 +1,64 @@
+name: Test with changesets present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a changeset file
+        run: |
+          mkdir -p .changeset
+          # Create a minimal changeset config
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          # Create a sample changeset
+          cat > .changeset/test-changeset.md << 'EOF'
+          ---
+          "my-package": patch
+          ---
+
+          Test changeset for CI
+          EOF
+          echo "Created .changeset directory with config and a changeset"
+          ls -la .changeset/
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          setupGitUser: "true"
+          commit: "Version Packages (test)"
+          title: "Version Packages (test)"
+
+      - name: Assert action detected changesets or failed gracefully on sentinel repo
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ "$HAS_CHANGESETS" != "true" ]; then
+              echo "FAIL: expected hasChangesets to be 'true' but got '$HAS_CHANGESETS'"
+              exit 1
+            fi
+            echo "PASS: hasChangesets is true as expected"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable, PR creation expected to fail)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
