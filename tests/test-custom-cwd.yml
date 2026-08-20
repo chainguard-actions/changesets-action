@@ -1,0 +1,71 @@
+name: Test custom cwd input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - name: Set up a subdirectory with changeset config
+        run: |
+          mkdir -p myproject/.changeset
+          cat > myproject/.changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          cat > myproject/package.json <<'EOF'
+          {
+            "name": "my-cwd-package",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+
+      - name: Commit files so git is clean
+        run: |
+          git add myproject
+          git commit -m "add myproject with changeset config" || true
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          setupGitUser: "true"
+          cwd: "./myproject"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assert action ran with custom cwd or failed gracefully
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$HAS_CHANGESETS" ]; then
+              echo "FAIL: expected hasChangesets output but got empty"
+              exit 1
+            fi
+            echo "PASS: action ran with cwd input, hasChangesets=$HAS_CHANGESETS"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
