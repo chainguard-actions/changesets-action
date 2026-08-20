@@ -1,4 +1,4 @@
-name: Test publish mode
+name: Test git-cli commitMode with custom commit and title
 on:
   workflow_dispatch:
 jobs:
@@ -9,16 +9,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Node.js and minimal package for publish test
+      - name: Set up minimal changeset config
         run: |
-          # Create a minimal package.json so the publish command can run
-          cat > package.json <<'EOF'
-          {
-            "name": "test-package",
-            "version": "1.0.0",
-            "private": true
-          }
-          EOF
           mkdir -p .changeset
           cat > .changeset/config.json <<'EOF'
           {
@@ -39,31 +31,31 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish: "echo 'publish-noop'"
+          commitMode: "git-cli"
           setupGitUser: "true"
-          createGithubReleases: "false"
+          commit: "chore: version packages"
+          title: "Version Packages"
 
-      - name: Assert action ran and produced outputs or failed gracefully
+      - name: Assert action ran or failed gracefully with git-cli commitMode
         env:
           OUTCOME: ${{ steps.action.outcome }}
-          PUBLISHED: ${{ steps.action.outputs.published }}
-          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PR_NUMBER: ${{ steps.action.outputs.pullRequestNumber }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "published: $PUBLISHED"
-          echo "publishedPackages: $PUBLISHED_PACKAGES"
           echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          echo "pullRequestNumber: $PR_NUMBER"
           if [ "$OUTCOME" = "success" ]; then
-            echo "Action succeeded"
-            # published should be a boolean string
-            if [ -z "$PUBLISHED" ]; then
-              echo "FAIL: published output is empty on success"
+            echo "Action succeeded with git-cli commitMode"
+            if [ -z "$HAS_CHANGESETS" ]; then
+              echo "FAIL: hasChangesets output is empty on success"
               exit 1
             fi
-            echo "PASS: published=$PUBLISHED"
+            echo "PASS: hasChangesets=$HAS_CHANGESETS"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo or missing packages)"
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

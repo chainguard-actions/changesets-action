@@ -1,4 +1,4 @@
-name: Test publish mode
+name: Test branch, cwd, and version inputs
 on:
   workflow_dispatch:
 jobs:
@@ -6,15 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
 
-      - name: Set up Node.js and minimal package for publish test
+      - name: Set up a working directory with a minimal package
         run: |
-          # Create a minimal package.json so the publish command can run
+          mkdir -p "$GITHUB_WORKSPACE/test-pkg"
+          cd "$GITHUB_WORKSPACE/test-pkg"
           cat > package.json <<'EOF'
           {
-            "name": "test-package",
+            "name": "test-pkg",
             "version": "1.0.0",
             "private": true
           }
@@ -28,7 +27,7 @@ jobs:
             "fixed": [],
             "linked": [],
             "access": "restricted",
-            "baseBranch": "main",
+            "baseBranch": "act-harness",
             "updateInternalDependencies": "patch",
             "ignore": []
           }
@@ -39,31 +38,24 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish: "echo 'publish-noop'"
+          cwd: ./test-pkg
+          branch: act-harness
+          version: "node -e \"console.log('version command called')\""
           setupGitUser: "true"
-          createGithubReleases: "false"
 
-      - name: Assert action ran and produced outputs or failed gracefully
+      - name: Assert action ran with branch/cwd/version inputs
         env:
           OUTCOME: ${{ steps.action.outcome }}
-          PUBLISHED: ${{ steps.action.outputs.published }}
-          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
           HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "published: $PUBLISHED"
-          echo "publishedPackages: $PUBLISHED_PACKAGES"
           echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
           if [ "$OUTCOME" = "success" ]; then
-            echo "Action succeeded"
-            # published should be a boolean string
-            if [ -z "$PUBLISHED" ]; then
-              echo "FAIL: published output is empty on success"
-              exit 1
-            fi
-            echo "PASS: published=$PUBLISHED"
+            echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo or missing packages)"
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
