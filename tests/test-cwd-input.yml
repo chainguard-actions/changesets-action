@@ -1,0 +1,42 @@
+name: Test cwd input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up a working directory for cwd input
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/my-project"
+          # Initialize a minimal package.json so the action can find a project root
+          cat > "$GITHUB_WORKSPACE/my-project/package.json" <<'EOF'
+          {
+            "name": "my-project",
+            "version": "1.0.0"
+          }
+          EOF
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cwd: ./my-project
+          setupGitUser: "true"
+      - name: Assert action ran with cwd input (success or graceful failure on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with cwd input"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected on sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

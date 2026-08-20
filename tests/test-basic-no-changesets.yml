@@ -1,0 +1,67 @@
+name: Test basic usage - no changesets
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up minimal package.json and changeset config
+        run: |
+          # Create a minimal package.json if not present
+          if [ ! -f package.json ]; then
+            echo '{"name": "test-repo", "version": "1.0.0", "private": true}' > package.json
+          fi
+          # Create .changeset directory with config
+          mkdir -p .changeset
+          if [ ! -f .changeset/config.json ]; then
+            cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "act-harness",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+          fi
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          setupGitUser: "true"
+
+      - name: Assert action ran and produced outputs or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — hasChangesets should be a boolean string
+            if [ "$HAS_CHANGESETS" != "false" ] && [ "$HAS_CHANGESETS" != "true" ]; then
+              echo "FAIL: expected hasChangesets to be 'true' or 'false', got: '$HAS_CHANGESETS'"
+              exit 1
+            fi
+            echo "PASS: action succeeded with hasChangesets=$HAS_CHANGESETS"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

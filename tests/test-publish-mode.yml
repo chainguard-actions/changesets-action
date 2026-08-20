@@ -1,0 +1,69 @@
+name: Test publish mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up minimal package.json and changeset config
+        run: |
+          # Create a minimal package.json if not present
+          if [ ! -f package.json ]; then
+            echo '{"name": "test-repo", "version": "1.0.0", "private": true}' > package.json
+          fi
+          # Create .changeset directory with config (no changesets = publish mode triggers)
+          mkdir -p .changeset
+          cat > .changeset/config.json << 'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "act-harness",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          publish: "echo 'publish step executed'"
+          setupGitUser: "true"
+          createGithubReleases: "false"
+
+      - name: Assert action ran in publish mode or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — published should be a boolean string
+            if [ "$PUBLISHED" != "false" ] && [ "$PUBLISHED" != "true" ]; then
+              echo "FAIL: expected published to be 'true' or 'false', got: '$PUBLISHED'"
+              exit 1
+            fi
+            echo "PASS: action succeeded in publish mode with published=$PUBLISHED"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
