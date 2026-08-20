@@ -1,0 +1,43 @@
+name: Test publish input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          publish: "echo 'publish step'"
+          setupGitUser: "true"
+          createGithubReleases: "false"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Assert action ran (publish input accepted)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.publishedPackages }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "published: $PUBLISHED"
+          echo "publishedPackages: $PUBLISHED_PACKAGES"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with publish input"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

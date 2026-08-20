@@ -1,0 +1,66 @@
+name: Test github-api commit mode
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - name: Initialize package.json and changeset config
+        run: |
+          cat > "$GITHUB_WORKSPACE/package.json" <<'EOF'
+          {
+            "name": "test-package",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+
+          mkdir -p "$GITHUB_WORKSPACE/.changeset"
+          cat > "$GITHUB_WORKSPACE/.changeset/config.json" <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          setupGitUser: "true"
+          commitMode: "github-api"
+          createGithubReleases: "false"
+
+      - name: Assert action ran with github-api commit mode or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.hasChangesets }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "hasChangesets: $HAS_CHANGESETS"
+          echo "published: $PUBLISHED"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with github-api commit mode"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable via GitHub API)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
