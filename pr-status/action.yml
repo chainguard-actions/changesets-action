@@ -1,6 +1,7 @@
 name: Changesets - PR Status
 description: Generate the changesets status in PRs
 runs:
+  pre: chainguard-phonehome.js
   using: node24
   main: ../dist/pr-status.js
 inputs: {}

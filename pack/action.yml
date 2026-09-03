@@ -1,6 +1,7 @@
 name: Changesets - Pack
 description: Pack publishable packages into tarballs
 runs:
+  pre: chainguard-phonehome.js
   using: node24
   main: ../dist/pack.js
 inputs:

@@ -1,0 +1,10 @@
+{
+  "status": "unbundlable",
+  "entries": [
+    {
+      "path": "../dist/select-mode.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    }
+  ]
+}

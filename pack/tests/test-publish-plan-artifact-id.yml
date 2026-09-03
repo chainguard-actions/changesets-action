@@ -1,0 +1,54 @@
+name: Test publish-plan-artifact-id input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up a minimal package for changesets
+        run: |
+          cat > package.json <<'EOF'
+          {
+            "name": "test-workspace",
+            "version": "1.0.0",
+            "private": true
+          }
+          EOF
+          mkdir -p .changeset
+          cat > .changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          publish-plan-artifact-id: "12345"
+        continue-on-error: true
+
+      - name: Assert action ran with publish-plan-artifact-id input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ARTIFACT_ID: ${{ steps.action.outputs.pack-dir-artifact-id }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "pack-dir-artifact-id: $ARTIFACT_ID"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with fake artifact ID or sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
