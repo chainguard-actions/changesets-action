@@ -1,4 +1,4 @@
-name: Test basic publish action
+name: Test publish action with script input
 on:
   workflow_dispatch:
 jobs:
@@ -13,9 +13,10 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
+          script: "echo 'dry-run publish'"
           create-github-releases: "false"
           push-git-tags: "false"
-      - name: Assert action ran and produced outputs or failed gracefully
+      - name: Assert action ran with script input or failed gracefully
         env:
           PUBLISHED: ${{ steps.action.outputs.published }}
           OUTCOME: ${{ steps.action.outcome }}

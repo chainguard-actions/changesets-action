@@ -14,7 +14,7 @@ jobs:
           pr-base-branch: "main"
           commit-message: "Version Packages"
           pr-title: "Version Packages"
-      - name: Assert action ran with pr-base-branch input (success or graceful failure on sentinel repo)
+      - name: Assert action ran with pr-base-branch input (or failed gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           PR_NUMBER: ${{ steps.action.outputs.pr-number }}

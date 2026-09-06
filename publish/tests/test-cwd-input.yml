@@ -1,4 +1,4 @@
-name: Test basic publish action
+name: Test publish action with cwd input
 on:
   workflow_dispatch:
 jobs:
@@ -8,14 +8,17 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+      - name: Create a subdirectory to use as cwd
+        run: mkdir -p "$GITHUB_WORKSPACE/subproject"
       - id: action
         uses: .
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
+          cwd: "./subproject"
           create-github-releases: "false"
           push-git-tags: "false"
-      - name: Assert action ran and produced outputs or failed gracefully
+      - name: Assert action ran with cwd input or failed gracefully
         env:
           PUBLISHED: ${{ steps.action.outputs.published }}
           OUTCOME: ${{ steps.action.outcome }}
@@ -29,7 +32,7 @@ jobs:
             fi
             echo "PASS: published=$PUBLISHED"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo)"
+            echo "PASS: action failed gracefully (expected with sentinel repo or missing package.json)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

@@ -10,8 +10,9 @@ jobs:
         uses: .
         continue-on-error: true
         with:
+          github-token: ${{ github.token }}
           body: "This is a test comment from the changesets PR comment action."
-      - name: Assert action ran and produced output or failed gracefully
+      - name: Assert action ran (comment posted or failed gracefully on sentinel repo)
         env:
           COMMENT_ID: ${{ steps.action.outputs.comment-id }}
           OUTCOME: ${{ steps.action.outcome }}
@@ -23,9 +24,9 @@ jobs:
               echo "FAIL: action succeeded but comment-id output is empty"
               exit 1
             fi
-            echo "PASS: got comment-id '$COMMENT_ID'"
+            echo "PASS: comment created with id '$COMMENT_ID'"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo is not resolvable via GitHub API)"
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

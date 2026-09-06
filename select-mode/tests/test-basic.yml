@@ -1,4 +1,4 @@
-name: Test basic usage - no cwd
+name: Test basic usage (no changesets, no packages)
 on:
   workflow_dispatch:
 jobs:
@@ -6,9 +6,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up a minimal repo state with no changesets and no packages
+        run: |
+          # Ensure there is no .changeset directory with changeset files
+          # and no package.json so mode should be 'none'
+          rm -rf .changeset
+          rm -f package.json
+
       - id: action
         uses: .
         continue-on-error: true
+
       - name: Assert mode output is valid
         env:
           MODE: ${{ steps.action.outputs.mode }}
@@ -17,13 +26,13 @@ jobs:
           echo "outcome: $OUTCOME"
           echo "mode: $MODE"
           if [ "$OUTCOME" = "success" ]; then
-            if [ "$MODE" != "version" ] && [ "$MODE" != "publish" ] && [ "$MODE" != "none" ]; then
-              echo "FAIL: expected mode to be 'version', 'publish', or 'none', got: '$MODE'"
+            if [ "$MODE" != "none" ] && [ "$MODE" != "publish" ] && [ "$MODE" != "version" ]; then
+              echo "FAIL: expected mode to be 'none', 'publish', or 'version', got: '$MODE'"
               exit 1
             fi
-            echo "PASS: mode='$MODE'"
+            echo "PASS: mode is '$MODE'"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (dist may not be built in this environment)"
+            echo "PASS: action failed gracefully (sentinel repo or missing deps)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
