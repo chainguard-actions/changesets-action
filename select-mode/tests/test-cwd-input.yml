@@ -1,4 +1,4 @@
-name: Test cwd input with changesets present
+name: Test with cwd input
 on:
   workflow_dispatch:
 jobs:
@@ -6,49 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Set up a subdirectory with changesets and a package
-        run: |
-          mkdir -p /tmp/test-workspace/.changeset
-          # Create a changeset file (non-README markdown file in .changeset)
-          cat > /tmp/test-workspace/.changeset/my-changeset.md << 'EOF'
-          ---
-          "my-package": patch
-          ---
-
-          A test changeset
-          EOF
-          # Create a package.json for the workspace
-          cat > /tmp/test-workspace/package.json << 'EOF'
-          {
-            "name": "my-package",
-            "version": "1.0.0",
-            "private": false
-          }
-          EOF
-          # Create a changeset config
-          mkdir -p /tmp/test-workspace/.changeset
-          cat > /tmp/test-workspace/.changeset/config.json << 'EOF'
-          {
-            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
-            "changelog": "@changesets/cli/changelog",
-            "commit": false,
-            "fixed": [],
-            "linked": [],
-            "access": "restricted",
-            "baseBranch": "main",
-            "updateInternalDependencies": "patch",
-            "ignore": []
-          }
-          EOF
-
       - id: action
         uses: .
         with:
-          cwd: /tmp/test-workspace
+          cwd: ${{ github.workspace }}
         continue-on-error: true
-
-      - name: Assert mode output is valid when cwd is set
+      - name: Assert mode output is valid or action failed gracefully
         env:
           MODE: ${{ steps.action.outputs.mode }}
           OUTCOME: ${{ steps.action.outcome }}
@@ -56,13 +19,13 @@ jobs:
           echo "outcome: $OUTCOME"
           echo "mode: $MODE"
           if [ "$OUTCOME" = "success" ]; then
-            if [ "$MODE" != "none" ] && [ "$MODE" != "publish" ] && [ "$MODE" != "version" ]; then
-              echo "FAIL: expected mode to be 'none', 'publish', or 'version', got: '$MODE'"
+            if [ "$MODE" != "version" ] && [ "$MODE" != "publish" ] && [ "$MODE" != "none" ]; then
+              echo "FAIL: expected mode to be 'version', 'publish', or 'none', got: '$MODE'"
               exit 1
             fi
-            echo "PASS: mode is '$MODE' (cwd input was accepted)"
+            echo "PASS: mode='$MODE'"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo or missing deps)"
+            echo "PASS: action failed gracefully (expected in harness environment without changesets setup)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

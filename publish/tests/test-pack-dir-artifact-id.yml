@@ -1,4 +1,4 @@
-name: Test cwd input
+name: Test pack-dir-artifact-id input
 on:
   workflow_dispatch:
 jobs:
@@ -6,16 +6,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a subdirectory to use as cwd
-        run: mkdir -p "$GITHUB_WORKSPACE/my-package"
       - id: action
         uses: .
         continue-on-error: true
         with:
-          cwd: "./my-package"
+          pack-dir-artifact-id: "12345"
           create-github-releases: "false"
           push-git-tags: "false"
-      - name: Assert action ran with cwd input (or failed gracefully on sentinel repo)
+      - name: Assert action ran with pack-dir-artifact-id (or failed gracefully on sentinel repo)
         env:
           PUBLISHED: ${{ steps.action.outputs.published }}
           OUTCOME: ${{ steps.action.outcome }}

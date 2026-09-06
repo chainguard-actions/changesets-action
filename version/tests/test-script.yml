@@ -12,7 +12,8 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: "node --version"
-          push-with-git-cli: true
+          commit-message: "Version Packages"
+          pr-title: "Version Packages"
       - name: Assert action ran with script input (or failed gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}

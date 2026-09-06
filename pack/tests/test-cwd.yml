@@ -1,4 +1,4 @@
-name: Test with cwd input
+name: Test cwd input
 on:
   workflow_dispatch:
 jobs:
@@ -8,10 +8,10 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
         uses: .
-        continue-on-error: true
         with:
           cwd: ${{ github.workspace }}
-      - name: Assert action ran (succeeded or failed gracefully on sentinel repo)
+        continue-on-error: true
+      - name: Assert action ran with cwd input (or failed gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           ARTIFACT_ID: ${{ steps.action.outputs.pack-dir-artifact-id }}
@@ -21,7 +21,7 @@ jobs:
           if [ "$OUTCOME" = "success" ]; then
             echo "PASS: action succeeded with cwd input"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected on sentinel repo without real artifacts)"
+            echo "PASS: action failed gracefully (expected under sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

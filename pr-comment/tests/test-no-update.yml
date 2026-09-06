@@ -1,4 +1,4 @@
-name: Test disabled comment updating (empty update-id)
+name: Test empty update-id disables comment updating
 on:
   workflow_dispatch:
 jobs:
@@ -10,10 +10,9 @@ jobs:
         uses: .
         continue-on-error: true
         with:
-          github-token: ${{ github.token }}
-          body: "Test comment with update disabled (empty update-id)."
+          body: "No-update test comment — a new comment is created each time."
           update-id: ""
-      - name: Assert action ran with empty update-id (comment posted or failed gracefully on sentinel repo)
+      - name: Assert action ran with empty update-id (or failed gracefully on sentinel repo)
         env:
           COMMENT_ID: ${{ steps.action.outputs.comment-id }}
           OUTCOME: ${{ steps.action.outcome }}
@@ -25,7 +24,7 @@ jobs:
               echo "FAIL: action succeeded but comment-id output is empty"
               exit 1
             fi
-            echo "PASS: comment created with id '$COMMENT_ID'"
+            echo "PASS: got comment-id '$COMMENT_ID'"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else

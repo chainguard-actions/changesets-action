@@ -12,8 +12,8 @@ jobs:
         with:
           github-token: ${{ github.token }}
           pr-draft: "create"
-          commit-message: "Version Packages (draft)"
-          pr-title: "Version Packages (draft)"
+          commit-message: "Version Packages"
+          pr-title: "Version Packages"
       - name: Assert action ran with pr-draft input (or failed gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}

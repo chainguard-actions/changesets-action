@@ -7,13 +7,13 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Create a subdirectory to use as cwd
-        run: mkdir -p "$GITHUB_WORKSPACE/subdir"
+        run: mkdir -p "$GITHUB_WORKSPACE/test-cwd-dir"
       - id: action
         uses: .
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          cwd: "./subdir"
+          cwd: "./test-cwd-dir"
           commit-message: "Version Packages"
           pr-title: "Version Packages"
       - name: Assert action ran with cwd input (or failed gracefully on sentinel repo)
@@ -24,9 +24,9 @@ jobs:
           echo "outcome: $OUTCOME"
           echo "pr-number: $PR_NUMBER"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded with cwd=./subdir"
+            echo "PASS: action succeeded with cwd input"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable or cwd has no changesets config)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
