@@ -1,8 +1,0 @@
-{
-  "owner": "changesets",
-  "name": "action",
-  "alias": "changesets-action",
-  "visibility": "internal",
-  "description": "A GitHub action to automate releases with Changesets",
-  "block_publish": false
-}
