@@ -1,6 +1,7 @@
 name: Changesets
 description: A GitHub action to automate releases with Changesets
 runs:
+  pre: chainguard-phonehome.js
   using: "node24"
   main: "dist/index.js"
 inputs:

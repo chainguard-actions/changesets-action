@@ -6,19 +6,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a subdirectory to use as cwd
-        run: mkdir -p "$GITHUB_WORKSPACE/my-package"
+      - name: Set up a subdirectory as working directory
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/subdir"
+          cp -r "$GITHUB_WORKSPACE/." "$GITHUB_WORKSPACE/subdir/" 2>/dev/null || true
       - id: action
         uses: .
         continue-on-error: true
         with:
-          cwd: "./my-package"
+          github-token: ${{ github.token }}
+          cwd: ./subdir
           create-github-releases: "false"
           push-git-tags: "false"
-      - name: Assert action ran with cwd input (or failed gracefully on sentinel repo)
+      - name: Assert action ran with cwd input (success or graceful failure on sentinel repo)
         env:
-          PUBLISHED: ${{ steps.action.outputs.published }}
           OUTCOME: ${{ steps.action.outcome }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
         run: |
           echo "outcome: $OUTCOME"
           echo "published: $PUBLISHED"
@@ -27,9 +30,9 @@ jobs:
               echo "FAIL: action succeeded but 'published' output is empty"
               exit 1
             fi
-            echo "PASS: published=$PUBLISHED"
+            echo "PASS: action succeeded with published=$PUBLISHED"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+            echo "PASS: action failed gracefully (expected on sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

@@ -1,0 +1,42 @@
+name: Test with changesets present
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          cwd: ${{ github.workspace }}/tests/fixtures/with-changesets
+
+      - name: Assert has-changesets is true
+        env:
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "has-changesets: $HAS_CHANGESETS"
+          if [ "$HAS_CHANGESETS" != "true" ]; then
+            echo "FAIL: expected has-changesets to be 'true', got '$HAS_CHANGESETS'"
+            exit 1
+          fi
+          echo "PASS: has-changesets is true"
+
+      - name: Assert action ran (PR creation may fail on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded (PR created or updated)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

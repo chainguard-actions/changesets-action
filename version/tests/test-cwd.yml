@@ -1,4 +1,4 @@
-name: Test cwd input
+name: Test custom working directory
 on:
   workflow_dispatch:
 jobs:
@@ -6,17 +6,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
       - name: Create a subdirectory to use as cwd
-        run: mkdir -p "$GITHUB_WORKSPACE/test-cwd-dir"
+        run: mkdir -p "$GITHUB_WORKSPACE/subdir"
       - id: action
         uses: .
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          cwd: "./test-cwd-dir"
-          commit-message: "Version Packages"
-          pr-title: "Version Packages"
-      - name: Assert action ran with cwd input (or failed gracefully on sentinel repo)
+          cwd: ./subdir
+      - name: Assert action ran with custom cwd (or failed gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           PR_NUMBER: ${{ steps.action.outputs.pr-number }}
@@ -24,9 +24,9 @@ jobs:
           echo "outcome: $OUTCOME"
           echo "pr-number: $PR_NUMBER"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded with cwd input"
+            echo "PASS: action succeeded with custom working directory"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo is not resolvable or cwd has no changesets config)"
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable or no changesets in subdir)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

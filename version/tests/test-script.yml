@@ -11,10 +11,10 @@ jobs:
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          script: "node --version"
+          script: "echo 'custom version script'"
           commit-message: "Version Packages"
           pr-title: "Version Packages"
-      - name: Assert action ran with script input (or failed gracefully on sentinel repo)
+      - name: Assert action ran with script input (success or graceful failure on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           PR_NUMBER: ${{ steps.action.outputs.pr-number }}
@@ -22,7 +22,7 @@ jobs:
           echo "outcome: $OUTCOME"
           echo "pr-number: $PR_NUMBER"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded with script input"
+            echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else

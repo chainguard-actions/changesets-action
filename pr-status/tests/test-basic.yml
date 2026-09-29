@@ -1,4 +1,4 @@
-name: Test cwd input
+name: Test basic usage - changesets PR status
 on:
   workflow_dispatch:
 jobs:
@@ -6,22 +6,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
       - id: action
         uses: .
-        with:
-          cwd: ${{ github.workspace }}
         continue-on-error: true
-      - name: Assert action ran with cwd input (or failed gracefully on sentinel repo)
+
+      - name: Assert action ran and produced output or failed gracefully
         env:
           OUTCOME: ${{ steps.action.outcome }}
-          ARTIFACT_ID: ${{ steps.action.outputs.pack-dir-artifact-id }}
+          COMMENT_BODY: ${{ steps.action.outputs.comment-body }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "pack-dir-artifact-id: $ARTIFACT_ID"
+          echo "comment-body: $COMMENT_BODY"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded with cwd input"
+            echo "PASS: action succeeded"
+            echo "comment-body length: ${#COMMENT_BODY}"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected under sentinel repo)"
+            echo "PASS: action failed gracefully (expected under sentinel repo or missing dist)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
