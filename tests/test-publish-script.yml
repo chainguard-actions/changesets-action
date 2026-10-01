@@ -6,14 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
       - id: action
         uses: .
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish-script: echo "publishing packages"
+          publish-script: echo "publish"
       - name: Assert action ran with publish-script input
         env:
           OUTCOME: ${{ steps.action.outcome }}
@@ -26,12 +24,11 @@ jobs:
           echo "published-packages: $PUBLISHED_PACKAGES"
           echo "has-changesets: $HAS_CHANGESETS"
           if [ "$OUTCOME" = "success" ]; then
-            echo "Action succeeded"
             if [ -z "$PUBLISHED" ] && [ -z "$HAS_CHANGESETS" ]; then
               echo "FAIL: action succeeded but no outputs were set"
               exit 1
             fi
-            echo "PASS: action ran successfully with publish-script input"
+            echo "PASS: action succeeded with publish-script input"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else

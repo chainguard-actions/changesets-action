@@ -12,9 +12,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           pack-dir-artifact-id: "12345"
-          create-github-releases: "false"
-          push-git-tags: "false"
-      - name: Assert action ran with pack-dir-artifact-id input (success or graceful failure on sentinel repo)
+      - name: Assert action ran with pack-dir-artifact-id input
         env:
           OUTCOME: ${{ steps.action.outcome }}
           PUBLISHED: ${{ steps.action.outputs.published }}
@@ -28,9 +26,9 @@ jobs:
               echo "FAIL: action succeeded but 'published' output is empty"
               exit 1
             fi
-            echo "PASS: action succeeded with published=$PUBLISHED"
+            echo "PASS: action succeeded with pack-dir-artifact-id input, published=$PUBLISHED"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected on sentinel repo)"
+            echo "PASS: action failed gracefully (expected - artifact ID does not exist in sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

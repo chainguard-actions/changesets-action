@@ -1,4 +1,4 @@
-name: Test publish-plan-artifact-id input - pack with a publish plan artifact
+name: Test publish-plan-artifact-id input
 on:
   workflow_dispatch:
 jobs:
@@ -13,7 +13,7 @@ jobs:
           publish-plan-artifact-id: "12345"
         continue-on-error: true
 
-      - name: Assert action ran with publish-plan-artifact-id (output set or failed gracefully)
+      - name: Assert action ran with publish-plan-artifact-id input (output set or failed gracefully)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           ARTIFACT_ID: ${{ steps.action.outputs.pack-dir-artifact-id }}
@@ -23,7 +23,7 @@ jobs:
           if [ "$OUTCOME" = "success" ]; then
             echo "PASS: action succeeded with artifact id '$ARTIFACT_ID'"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo or missing artifact)"
+            echo "PASS: action failed gracefully (expected: sentinel repo cannot resolve artifact or no publishable packages)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
