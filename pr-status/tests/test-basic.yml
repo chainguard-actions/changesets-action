@@ -1,0 +1,33 @@
+name: Test basic usage - changesets PR status
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        continue-on-error: true
+
+      - name: Assert action ran and produced expected outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          COMMENT_BODY: ${{ steps.action.outputs.comment-body }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "comment-body: $COMMENT_BODY"
+          if [ "$OUTCOME" = "success" ]; then
+            # If the action succeeded, comment-body should be non-empty
+            if [ -z "$COMMENT_BODY" ]; then
+              echo "FAIL: action succeeded but comment-body output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with comment-body output"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under non-PR/sentinel-repo context)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

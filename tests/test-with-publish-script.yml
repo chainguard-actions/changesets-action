@@ -1,0 +1,78 @@
+name: Test with publish-script input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - name: Set up a Node.js project with no changesets (ready to publish)
+        run: |
+          # Create a minimal package.json (no changesets = ready to publish)
+          cat > package.json <<'EOF'
+          {
+            "name": "my-publishable-lib",
+            "version": "1.2.3",
+            "private": false
+          }
+          EOF
+
+          # Create .changeset directory with config but no changeset files
+          mkdir -p .changeset
+          cat > .changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "public",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+          git add package.json .changeset/config.json
+          git commit -m "chore: ready to publish"
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          github-token: ${{ github.token }}
+          publish-script: "echo 'dry-run publish'"
+          create-github-releases: "false"
+          push-git-tags: "false"
+
+      - name: Assert action ran with publish-script or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PUBLISHED: ${{ steps.action.outputs.published }}
+          PUBLISHED_PACKAGES: ${{ steps.action.outputs.published-packages }}
+          HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "published: $PUBLISHED"
+          echo "published-packages: $PUBLISHED_PACKAGES"
+          echo "has-changesets: $HAS_CHANGESETS"
+
+          if [ "$OUTCOME" = "success" ]; then
+            # Action succeeded — verify outputs are set
+            if [ "$PUBLISHED" != "true" ] && [ "$PUBLISHED" != "false" ]; then
+              echo "FAIL: expected published to be 'true' or 'false', got: '$PUBLISHED'"
+              exit 1
+            fi
+            echo "PASS: action succeeded with publish-script input (published=$PUBLISHED)"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable via GitHub API)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

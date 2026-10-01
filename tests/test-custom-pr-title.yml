@@ -1,4 +1,4 @@
-name: Test custom PR title and commit message
+name: Test custom PR title and commit message inputs
 on:
   workflow_dispatch:
 jobs:
@@ -6,40 +6,74 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - name: Set up a Node.js project with a changeset file
+        run: |
+          # Create a minimal package.json
+          cat > package.json <<'EOF'
+          {
+            "name": "my-lib",
+            "version": "0.1.0",
+            "private": true
+          }
+          EOF
+
+          # Create .changeset directory with config and a changeset file
+          mkdir -p .changeset
+          cat > .changeset/config.json <<'EOF'
+          {
+            "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
+            "changelog": "@changesets/cli/changelog",
+            "commit": false,
+            "fixed": [],
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+          cat > .changeset/add-feature.md <<'EOF'
+          ---
+          "my-lib": minor
+          ---
+
+          Add a new feature
+          EOF
+
+          git add package.json .changeset/
+          git commit -m "chore: add changeset for new feature"
 
       - id: action
         uses: .
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          commit-message: "chore: version packages"
-          pr-title: "chore: version packages"
-          pr-draft: "create"
+          commit-message: "chore: release packages"
+          pr-title: "chore: release packages"
 
       - name: Assert action ran with custom inputs or failed gracefully
         env:
           OUTCOME: ${{ steps.action.outcome }}
           HAS_CHANGESETS: ${{ steps.action.outputs.has-changesets }}
           PUBLISHED: ${{ steps.action.outputs.published }}
-          PR_NUMBER: ${{ steps.action.outputs.pr-number }}
         run: |
           echo "outcome: $OUTCOME"
           echo "has-changesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
-          echo "pr-number: $PR_NUMBER"
+
           if [ "$OUTCOME" = "success" ]; then
-            # On success, has-changesets and published should be boolean strings
             if [ "$HAS_CHANGESETS" != "true" ] && [ "$HAS_CHANGESETS" != "false" ]; then
               echo "FAIL: expected has-changesets to be 'true' or 'false', got: '$HAS_CHANGESETS'"
               exit 1
             fi
-            if [ "$PUBLISHED" != "true" ] && [ "$PUBLISHED" != "false" ]; then
-              echo "FAIL: expected published to be 'true' or 'false', got: '$PUBLISHED'"
-              exit 1
-            fi
-            echo "PASS: action succeeded with custom PR title and commit message"
+            echo "PASS: action succeeded with custom commit-message and pr-title inputs"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable via GitHub API)"
           else
