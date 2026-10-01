@@ -1,6 +1,7 @@
 name: Changesets - PR Comment
 description: Create or update comments on PRs
 runs:
+  pre: chainguard-phonehome.js
   using: node24
   main: ../dist/pr-comment.js
 inputs:

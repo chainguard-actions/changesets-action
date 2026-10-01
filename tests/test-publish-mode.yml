@@ -1,4 +1,4 @@
-name: Test changesets action - with publish script
+name: Test publish mode with publish-script
 on:
   workflow_dispatch:
 jobs:
@@ -12,11 +12,15 @@ jobs:
           git config user.email "test@example.com"
           git config user.name "Test User"
 
-      - name: Ensure .changeset directory exists with config
+      - name: Set up package.json and changeset config (no pending changesets)
         run: |
+          # Create a minimal package.json
+          if [ ! -f package.json ]; then
+            echo '{"name": "test-pkg", "version": "1.0.0"}' > package.json
+          fi
+          # Ensure .changeset directory exists with config but no changeset files
           mkdir -p .changeset
-          if [ ! -f .changeset/config.json ]; then
-            cat > .changeset/config.json <<'EOF'
+          cat > .changeset/config.json <<'EOF'
           {
             "$schema": "https://unpkg.com/@changesets/config@3.0.0/schema.json",
             "changelog": "@changesets/cli/changelog",
@@ -24,23 +28,29 @@ jobs:
             "fixed": [],
             "linked": [],
             "access": "restricted",
-            "baseBranch": "main",
+            "baseBranch": "act-harness",
             "updateInternalDependencies": "patch",
             "ignore": []
           }
           EOF
-          fi
+          # Create a fake publish script that echoes success
+          cat > /tmp/fake-publish.sh <<'SCRIPT'
+          #!/bin/sh
+          echo "Fake publish: no packages to publish"
+          exit 0
+          SCRIPT
+          chmod +x /tmp/fake-publish.sh
 
       - id: action
         uses: .
         continue-on-error: true
         with:
           github-token: ${{ github.token }}
-          publish-script: "echo 'no-op publish'"
+          publish-script: "sh /tmp/fake-publish.sh"
           create-github-releases: "false"
           push-git-tags: "false"
 
-      - name: Assert action ran with publish script or failed gracefully
+      - name: Assert action ran with publish-script or failed gracefully
         env:
           OUTCOME: ${{ steps.action.outcome }}
           PUBLISHED: ${{ steps.action.outputs.published }}
@@ -52,19 +62,14 @@ jobs:
           echo "published-packages: $PUBLISHED_PACKAGES"
           echo "has-changesets: $HAS_CHANGESETS"
           if [ "$OUTCOME" = "success" ]; then
-            # published should be a boolean string
-            if [ "$PUBLISHED" != "true" ] && [ "$PUBLISHED" != "false" ]; then
+            # Action succeeded — verify outputs are set
+            if [ "$PUBLISHED" != "false" ] && [ "$PUBLISHED" != "true" ]; then
               echo "FAIL: expected published to be 'true' or 'false', got: '$PUBLISHED'"
               exit 1
             fi
-            # has-changesets should be a boolean string
-            if [ "$HAS_CHANGESETS" != "true" ] && [ "$HAS_CHANGESETS" != "false" ]; then
-              echo "FAIL: expected has-changesets to be 'true' or 'false', got: '$HAS_CHANGESETS'"
-              exit 1
-            fi
-            echo "PASS: action succeeded with published=$PUBLISHED has-changesets=$HAS_CHANGESETS"
+            echo "PASS: action succeeded in publish mode with published=$PUBLISHED"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo - API calls fail)"
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1

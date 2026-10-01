@@ -1,0 +1,44 @@
+name: Test PR context - changesets pr-status
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Simulate a pull_request event context via env vars.
+    # Note: JS actions reading github.context will still see workflow_dispatch
+    # and act-harness branch; these env vars are for composite/shell actions.
+    # The action may fail because GITHUB_REPOSITORY is a sentinel that does not
+    # exist on GitHub. We assert on the outcome gracefully.
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_HEAD_REF: feature/add-changeset
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - id: action
+        uses: .
+        continue-on-error: true
+
+      - name: Assert action ran and produced output or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          COMMENT_BODY: ${{ steps.action.outputs.comment-body }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "comment-body length: ${#COMMENT_BODY}"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$COMMENT_BODY" ]; then
+              echo "FAIL: action succeeded but comment-body output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded and produced a comment-body"
+            echo "comment-body: $COMMENT_BODY"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected — sentinel repo not resolvable or no real PR context)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

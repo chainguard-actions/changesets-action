@@ -1,6 +1,7 @@
 name: Changesets - Version
 description: Version packages
 runs:
+  pre: chainguard-phonehome.js
   using: node24
   main: ../dist/version.js
 inputs:

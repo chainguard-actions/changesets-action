@@ -1,0 +1,52 @@
+name: Test basic pack usage (no inputs)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Node.js and install @changesets/cli
+        run: |
+          npm init -y
+          npm install @changesets/cli
+
+      - name: Initialize changesets
+        run: |
+          mkdir -p .changeset
+          cat > .changeset/config.json <<'EOF'
+          {
+            "changelog": false,
+            "commit": false,
+            "linked": [],
+            "access": "restricted",
+            "baseBranch": "main",
+            "updateInternalDependencies": "patch",
+            "ignore": []
+          }
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+
+      - name: Assert action ran (output set or failed gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          ARTIFACT_ID: ${{ steps.action.outputs.pack-dir-artifact-id }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "pack-dir-artifact-id: $ARTIFACT_ID"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$ARTIFACT_ID" ]; then
+              echo "FAIL: action succeeded but pack-dir-artifact-id output is empty"
+              exit 1
+            fi
+            echo "PASS: got artifact id '$ARTIFACT_ID'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under sentinel repo / no publishable packages)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

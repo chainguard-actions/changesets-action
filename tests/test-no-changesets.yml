@@ -1,4 +1,4 @@
-name: Test changesets action - no changesets scenario
+name: Test no changesets
 on:
   workflow_dispatch:
 jobs:
@@ -12,8 +12,13 @@ jobs:
           git config user.email "test@example.com"
           git config user.name "Test User"
 
-      - name: Ensure .changeset directory exists with config
+      - name: Set up minimal package.json and changeset config (no changesets)
         run: |
+          # Create a minimal package.json if not present
+          if [ ! -f package.json ]; then
+            echo '{"name": "test-repo", "version": "1.0.0", "private": true}' > package.json
+          fi
+          # Ensure .changeset directory exists with config but no changeset files
           mkdir -p .changeset
           if [ ! -f .changeset/config.json ]; then
             cat > .changeset/config.json <<'EOF'
@@ -24,7 +29,7 @@ jobs:
             "fixed": [],
             "linked": [],
             "access": "restricted",
-            "baseBranch": "main",
+            "baseBranch": "act-harness",
             "updateInternalDependencies": "patch",
             "ignore": []
           }
@@ -47,14 +52,18 @@ jobs:
           echo "has-changesets: $HAS_CHANGESETS"
           echo "published: $PUBLISHED"
           if [ "$OUTCOME" = "success" ]; then
-            # If the action succeeded, has-changesets should be a boolean string
-            if [ "$HAS_CHANGESETS" != "true" ] && [ "$HAS_CHANGESETS" != "false" ]; then
+            # Action succeeded — verify outputs are set
+            if [ "$HAS_CHANGESETS" != "false" ] && [ "$HAS_CHANGESETS" != "true" ]; then
               echo "FAIL: expected has-changesets to be 'true' or 'false', got: '$HAS_CHANGESETS'"
               exit 1
             fi
-            echo "PASS: action succeeded with has-changesets=$HAS_CHANGESETS"
+            if [ "$PUBLISHED" != "false" ] && [ "$PUBLISHED" != "true" ]; then
+              echo "FAIL: expected published to be 'true' or 'false', got: '$PUBLISHED'"
+              exit 1
+            fi
+            echo "PASS: action succeeded with has-changesets=$HAS_CHANGESETS published=$PUBLISHED"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected with sentinel repo - API calls fail)"
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
