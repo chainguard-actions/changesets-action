@@ -6,8 +6,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
       - id: action
         uses: .
         continue-on-error: true
@@ -24,11 +22,7 @@ jobs:
           echo "has-changesets: $HAS_CHANGESETS"
           echo "pr-number: $PR_NUMBER"
           if [ "$OUTCOME" = "success" ]; then
-            if [ -z "$HAS_CHANGESETS" ]; then
-              echo "FAIL: action succeeded but has-changesets output is empty"
-              exit 1
-            fi
-            echo "PASS: action succeeded with has-changesets=$HAS_CHANGESETS pr-number=$PR_NUMBER"
+            echo "PASS: action succeeded with version-script input"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else

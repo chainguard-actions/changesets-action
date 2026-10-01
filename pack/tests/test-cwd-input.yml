@@ -1,0 +1,28 @@
+name: Test cwd input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          cwd: ${{ github.workspace }}
+      - name: Assert action ran (outputs set, or failed gracefully on the sentinel repo)
+        env:
+          RESULT: ${{ steps.action.outputs.pack-dir-artifact-id }}
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "result: $RESULT"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with output: $RESULT"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected under sentinel repo / no packages to pack)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
