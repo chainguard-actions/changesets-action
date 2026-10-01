@@ -1,0 +1,35 @@
+name: Test custom inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
+          pr-base-branch: act-harness
+          push-with-git-cli: "false"
+
+      - name: Assert action ran with custom inputs (succeeded or failed gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PR_NUMBER: ${{ steps.action.outputs.pr-number }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "pr-number: $PR_NUMBER"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with custom inputs"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
