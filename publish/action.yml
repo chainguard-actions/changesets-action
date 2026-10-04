@@ -1,6 +1,7 @@
 name: Changesets - Publish
 description: Publish packages to npm
 runs:
+  pre: chainguard-phonehome.js
   using: node24
   main: ../dist/publish.js
 inputs:

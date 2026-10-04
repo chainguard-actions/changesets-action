@@ -1,0 +1,10 @@
+{
+  "status": "unbundlable",
+  "entries": [
+    {
+      "path": "../dist/version.js",
+      "status": "unbundlable",
+      "reason": "entry path is absolute or escapes the action root"
+    }
+  ]
+}
