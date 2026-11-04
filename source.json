@@ -4,8 +4,13 @@
   "version": "v2.1.0",
   "commit_sha": "198f833dd7d863100ea6e28967bc9a9fdefadb0a",
   "url": "https://github.com/changesets/action",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/changesets/action/v2.1.0/sha256-fdaff5b23c490694c31fed83c46eec864721926b03b5f9d3f91cacf93437b131.tar.gz",
+    "sha256": "fdaff5b23c490694c31fed83c46eec864721926b03b5f9d3f91cacf93437b131",
+    "size_bytes": 547797
+  }
 }
